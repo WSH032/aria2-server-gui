@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "njpwerner.autodocstring",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "charliermarsh.ruff"
+    ]
+}

@@ -1,0 +1,238 @@
+# https://hatch.pypa.io/latest/config/metadata/
+[project]
+name = "pyproject-template" # EDIT
+requires-python = ">=3.8"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Sean Wang", email = "126865849+WSH032@users.noreply.github.com" }, # EDIT
+]
+description = "pyproject-template." # EDIT
+keywords = ["pyproject-template"] # EDIT
+# https://pypi.org/classifiers/
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+] # EDIT
+
+dynamic = ["version"]
+
+# NOTE: version constraints
+# https://iscinumpy.dev/post/bound-version-constraints/
+
+dependencies = [] # EDIT
+
+[project.optional-dependencies]
+# NOTE: Must use `==` to constrain version for github actions cache working properly
+dev_fmt = [
+    "ruff==0.1.9",
+    "codespell==2.2.6",
+    "tomli",            # tomli needed for `codespell`
+]
+# NOTE: Must use `==` to constrain version for github actions cache working properly
+dev_test = [
+    "pyright == 1.1.344",
+    "pytest==7.4.3",
+    "pytest-cov== 4.1.0",
+    "pytest-timeout==2.2.0",
+]
+# NOTE: Must use `==` to constrain version for github actions cache working properly
+dev_docs = [
+    "mkdocs-material == 9.5.3",
+    "mkdocstrings[python] == 0.24.0",
+    "mkdocs-gen-files == 0.5.0",
+    "mkdocs-literate-nav == 0.6.1",
+    "mkdocs-section-index == 0.3.8",
+    "mkdocs-git-revision-date-localized-plugin == 1.2.2",
+    "mkdocs-git-committers-plugin-2 == 2.2.2",
+]
+
+
+[project.urls]
+Documentation = "https://WSH032.github.io/pyproject-template/"  # EDIT
+"Source code" = "https://github.com/WSH032/pyproject-template/" # EDIT
+
+
+# https://hatch.pypa.io/latest/config/metadata/#cli
+# [project.scripts]
+# EDIT: add or delete here
+
+
+[build-system]
+requires = ["hatch-regex-commit"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch.build.targets.wheel]
+# https://hatch.pypa.io/latest/plugins/builder/wheel/#default-file-selection
+# https://hatch.pypa.io/latest/config/build/#packages
+
+
+[tool.hatch.version]
+# refer to: https://github.com/frankie567/hatch-regex-commit
+source = "regex_commit"
+commit_extra_args = ["-e"]
+path = "src/pyproject_template/__init__.py" # EDIT: repo name
+# NOTE: `chore` is required by commitlint
+commit_message = "chore(version): 🚀 bump version v{current_version} → v{new_version}"
+tag_message = "🚀 bump version v{current_version} → v{new_version}"
+# NOTE: `v` prefix is required by github `publish.yml` action
+tag_name = "v{new_version}"
+check_dirty = false
+
+
+[tool.hatch.envs.default]
+path = ".venv-default"  # NOTE: Do not change the path, it's used in github action cache
+features = ["dev_test"]
+
+# NOTE: Do not change the scripts name, it's used in pre-commit local hook
+[tool.hatch.envs.default.scripts]
+# https://pytest-cov.readthedocs.io/en/latest/config.html
+# xml for codecov, html for local review
+test = "pytest tests/ --cov --cov-report=xml --cov-report=html"
+type-check = [
+    "pyright .",
+    "pyright --verifytypes pyproject_template --ignoreexternal", # EDIT: change `pyproject_template` to your package name
+]
+
+
+[tool.hatch.envs.fmt]
+path = ".venv-fmt"     # NOTE: Do not change the path, it's used in github action cache
+features = ["dev_fmt"]
+detached = true
+
+# NOTE: Do not change the scripts name, it's used in pre-commit local hook
+[tool.hatch.envs.fmt.scripts]
+# lint must before format
+fmt = ["- ruff check . --fix", "- ruff format ."]
+spell-fix = "codespell . -i 3 -w"
+fmt-check = ["ruff check .", "ruff format --check .", "codespell ."]
+
+
+[tool.hatch.envs.docs]
+path = ".venv-docs"     # NOTE: Do not change the path, it's used in github action cache
+features = ["dev_docs"]
+detached = true
+
+# NOTE: Do not change the scripts name, it's used in pre-commit local hook
+[tool.hatch.envs.docs.scripts]
+serve = "mkdocs serve"
+build = "mkdocs build"
+
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# https://docs.astral.sh/ruff/rules/
+[tool.ruff]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "C4",     # flake8-comprehensions
+    "B",      # flake8-bugbear
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "D",      # pydocstyle
+    "SIM",    # flake8-simplify
+    "RUF",    # unused-noqa
+    "Q",      # flake8-quotes
+    "C90",    # McCabe complexity
+    "ANN001", # missing-type-function-argument
+    "ANN201", # missing-return-type-undocumented-public-function
+    "ASYNC",  # flake8-async
+    "A",      # flake8-builtins
+    "COM",    # flake8-commas
+    "ISC",    # flake8-implicit-str-concat
+    "ICN001", # unconventional-import-alias
+    "PIE",    # flake8-pie
+    "PT",     # flake8-pytest-style
+    "INT",    # flake8-gettext
+    "ARG",    # flake8-unused-arguments
+    "PGH004", # blanket-noqa
+    "TRY201", # Use raise without specifying exception name
+    "NPY",    # NumPy-specific rules
+    "PD",     # pandas-vet
+    "PERF",   # Perflint
+    "PL",     # Pylint
+    "TID252", # Relative imports from parent modules are banned
+]
+ignore = [
+    "E501",    # line too long, handled by black
+    "COM812",  # missing-trailing-comma
+    "PERF203", # try-except within a loop incurs performance overhead
+    "PLR2004", # magic-value-comparison
+    "PLR5501", # collapsible-else-if
+    "PLW0120", # useless-else-on-loop
+    "PLR0911", # too-many-return-statements
+    "PLR0913", # too-many-arguments
+    "PLC0205", # single-string-slots
+    "PLW0603", # global-statement
+    "PLC1901", # compare-to-empty-string
+    "PLR0904", # too-many-public-methods
+    "RUF002",  # ambiguous-unicode-character-docstring
+    "RUF003",  # ambiguous-unicode-character-comment
+    "SIM105",  # suppressible-exception # slower
+    "ISC001",
+    # "D418",    # Function decorated with `@overload` shouldn't contain a docstring
+    # "SIM108",  # if-else-block-instead-of-if-exp
+]
+
+# https://docs.astral.sh/ruff/settings/#pydocstyle
+[tool.ruff.pydocstyle]
+convention = "google"
+
+# [tool.ruff.flake8-tidy-imports]
+# ban-relative-imports = "all"
+
+
+# https://microsoft.github.io/pyright/#/configuration
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.8"
+reportUnusedImport = "warning"
+reportUnusedFunction = "warning"
+reportUnusedExpression = "warning"
+reportUnusedVariable = "warning"
+reportUnnecessaryTypeIgnoreComment = true
+reportPrivateUsage = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportMissingTypeArgument = true
+reportMissingParameterType = true
+
+
+# https://coverage.readthedocs.io/en/7.3.2/config.html#run
+[tool.coverage.run]
+branch = true
+source = ['pyproject_template'] # EDIT
+
+# https://coverage.readthedocs.io/en/7.3.2/config.html#report
+[tool.coverage.report]
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    # # deprecated code will not be tested
+    "@(typing_extensions\\.)?deprecated",
+    # `overload` just for type hint, will not be tested
+    "@(typing_extensions\\.)?overload",
+    "@(typing\\.)?overload",
+    "raise AssertionError",
+]
+
+
+[tool.codespell]
+# https://github.com/codespell-project/codespell/issues/1887
+skip = "./htmlcov,./site"
+
+
+[tool.pytest.ini_options]
+timeout = 15

@@ -1,0 +1,201 @@
+# WARNING: Do not change the name of this folder, keep `setup-envs`.
+# other workflows need the name of the action to work.
+
+# https://docs.github.com/actions/using-workflows/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+
+# If need clear cache
+#     refer to: https://docs.github.com/zh/actions/using-workflows/caching-dependencies-to-speed-up-workflows#managing-caches
+#     run `gh cache delete --all`
+
+name: "Setup deps envs"
+description: |
+  Setup and cache deps envs for hatch and pre-commit.
+  will:
+      `pip install -r requirements.txt -U`
+      create and cache hatch venv
+      create and cache pre-commit venv
+  NOTE: use `setup-python` first
+
+inputs:
+  python-version:
+    description: "steps.setup-python.outputs.python-version"
+    required: true
+  python-path:
+    description: "steps.setup-python.outputs.python-path"
+    required: true
+
+  # default env
+  create-default-env:
+    description: "Whether to call `hatch env create default`"
+    default: "false"
+  cache-default-env:
+    description: "Whether to cache default env"
+    default: "false"
+  # fmt env
+  create-fmt-env:
+    description: "Whether to call `hatch env create fmt`"
+    default: "false"
+  cache-fmt-env:
+    description: "Whether to cache fmt env"
+    default: "false"
+  # docs env
+  create-docs-env:
+    description: "Whether to call `hatch env create docs`"
+    default: "false"
+  cache-docs-env:
+    description: "Whether to cache docs env"
+    default: "false"
+  # pre-commit cache
+  cache-pre-commit-deps:
+    description: "Whether to cache pre-commit deps"
+    default: "false"
+
+outputs:
+  default-cache-hit:
+    description: "hatch default env cache hit"
+    value: ${{ steps.cache-default-env.outputs.cache-hit }}
+  fmt-cache-hit:
+    description: "hatch fmt env cache hit"
+    value: ${{ steps.cache-fmt-env.outputs.cache-hit }}
+  docs-cache-hit:
+    description: "hatch docs env cache hit"
+    value: ${{ steps.cache-docs-env.outputs.cache-hit }}
+  pre-commit-cache-hit:
+    description: "pre-commit deps cache hit"
+    value: ${{ steps.cache-pre-commit-deps.outputs.cache-hit }}
+
+
+runs:
+  using: composite
+  steps:
+    # pip install hatch and pre-commit
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt -U
+        python -m pip freeze --local
+
+    #######################################
+    # Create hatch venv
+    # required before first running of pre-commit local system hooks,
+    #     read `#Environment setup` in `CONTRIBUTING.md` for more info
+    #######################################
+
+
+    #######################################
+    # cache default env
+    - name: cache default env
+      id: cache-default-env
+      if: ${{ inputs.cache-default-env == 'true' }}
+      uses: actions/cache@v3
+      env:
+        CACHE_VERSION: v1
+      with:
+        path: ./.venv-default
+        key: "\
+          hatch-default-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-\
+          python${{ inputs.python-version }}-\
+          ${{ inputs.python-path }}-\
+          ${{ hashFiles('pyproject.toml', 'requirements.txt') }}\
+          "
+        restore-keys: hatch-default-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-
+    # create default env
+    - name: create default env
+      id: create-default-env
+      if: ${{ inputs.create-default-env == 'true' }}
+      shell: bash
+      # IMPORTANT, FIXME: must re-install `. -e -U` again
+      #     issue: https://github.com/pypa/hatch/issues/771
+      #
+      #     cache `.venv-default` may cause some problems
+      #     i don't know whether `pip install -e . --no-deps` can fix this problem ?
+      #
+      # init pyright-python to avoid `npm ERR! code ENOTEMPTY`
+      #     Issue: https://github.com/RobertCraigie/pyright-python/issues/200
+      #
+      # Ignore warnings to improve performance
+      #     https://github.com/RobertCraigie/pyright-python?tab=readme-ov-file#ignore-warnings
+      run: |
+        echo "PYRIGHT_PYTHON_IGNORE_WARNINGS=1" >> "$GITHUB_ENV"
+
+        hatch env create default
+        hatch run default:pip install -e . --no-deps
+        hatch run default:pyright --help
+
+        hatch run default:pip freeze --local
+
+
+    #######################################
+    # cache fmt env
+    - name: cache fmt env
+      id: cache-fmt-env
+      if: ${{ inputs.cache-fmt-env == 'true' }}
+      uses: actions/cache@v3
+      env:
+        CACHE_VERSION: v1
+      with:
+        path: ./.venv-fmt
+        key: "\
+          hatch-fmt-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-\
+          python${{ inputs.python-version }}-\
+          ${{ inputs.python-path }}-\
+          ${{ hashFiles('pyproject.toml', 'requirements.txt') }}\
+          "
+        restore-keys: hatch-fmt-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-
+    # create fmt env
+    - name: create fmt env
+      id: create-fmt-env
+      if: ${{ inputs.create-fmt-env == 'true' }}
+      shell: bash
+      run: |
+        hatch env create fmt
+        hatch run fmt:pip freeze --local
+
+
+    #######################################
+    # cache docs env
+    - name: cache docs env
+      id: cache-docs-env
+      if: ${{ inputs.cache-docs-env == 'true' }}
+      uses: actions/cache@v3
+      env:
+        CACHE_VERSION: v1
+      with:
+        path: ./.venv-docs
+        key: "\
+          hatch-docs-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-\
+          python${{ inputs.python-version }}-\
+          ${{ inputs.python-path }}-\
+          ${{ hashFiles('pyproject.toml', 'requirements.txt') }}\
+          "
+        restore-keys: hatch-docs-venv-${{ runner.os }}-${{ env.CACHE_VERSION }}-
+    # create docs env
+    - name: create docs env
+      id: create-docs-env
+      if: ${{ inputs.create-docs-env == 'true' }}
+      shell: bash
+      run: |
+        hatch env create docs
+        hatch run docs:pip freeze --local
+
+
+    #######################################
+    # cache pre-commit deps
+    # modified from: https://github.com/pre-commit/action/blob/c7d159c2092cbfaab7352e2d8211ab536aa2267c/action.yml
+    #      https://pre-commit.com/#github-actions-example
+    - name: cache pre-commit deps
+      uses: actions/cache@v3
+      id: cache-pre-commit-deps
+      if: ${{ inputs.cache-pre-commit-deps == 'true' }}
+      env:
+        CACHE_VERSION: v1
+      with:
+        path: ~/.cache/pre-commit
+        key: "\
+          pre-commit-3-${{ runner.os }}-${{ env.CACHE_VERSION }}-\
+          python${{ inputs.python-version }}-\
+          ${{ inputs.python-path }}-\
+          ${{ hashFiles('.pre-commit-config.yaml') }}\
+          "
+        restore-keys: pre-commit-3-${{ runner.os }}-${{ env.CACHE_VERSION }}-
