@@ -47,6 +47,7 @@ pre-commit run --all-files
 
 # enter the dev environment
 hatch shell default
+
 ```
 
 That's all! Now, you can start to develop.

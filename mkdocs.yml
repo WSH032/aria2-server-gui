@@ -1,18 +1,18 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: pyproject-template # EDIT
-site_url: https://WSH032.github.io/pyproject-template/ # EDIT
+site_name: aria2-server-gui
+site_url: https://WSH032.github.io/aria2-server-gui/
 
-repo_url: https://github.com/WSH032/pyproject-template/ # EDIT
-repo_name: WSH032/pyproject-template # EDIT
+repo_url: https://github.com/WSH032/aria2-server-gui/
+repo_name: WSH032/aria2-server-gui
 
 edit_uri: edit/main/docs/
 
 theme:
   name: material
   icon:
-    logo: octicons/rocket-24 # EDIT: or do nothing
-  favicon: images/rocket-24.svg # EDIT: or do nothing
+    logo: octicons/rocket-24
+  favicon: images/rocket-24.svg
   features:
     - content.code.copy
     - content.code.annotate
@@ -121,13 +121,13 @@ plugins:
       enable_creation_date: true
       type: timeago
   - git-committers:
-      repository: WSH032/pyproject-template # EDIT
+      repository: WSH032/aria2-server-gui
       branch: main
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/WSH032/ # EDIT
+      link: https://github.com/WSH032/
 
 watch:
   - src/

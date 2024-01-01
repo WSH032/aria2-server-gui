@@ -24,4 +24,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- link -->
 
-<!-- EDIT: repo name --> [unreleased]: https://github.com/WSH032/pyproject-template/tree/HEAD
+[unreleased]: https://github.com/WSH032/aria2-server-gui/tree/HEAD

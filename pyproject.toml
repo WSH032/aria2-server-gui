@@ -1,14 +1,22 @@
 # https://hatch.pypa.io/latest/config/metadata/
 [project]
-name = "pyproject-template" # EDIT
+name = "aria2-server"
 requires-python = ">=3.8"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Sean Wang", email = "126865849+WSH032@users.noreply.github.com" }, # EDIT
+    { name = "Sean Wang", email = "126865849+WSH032@users.noreply.github.com" },
 ]
-description = "pyproject-template." # EDIT
-keywords = ["pyproject-template"] # EDIT
+description = "aria2 server with gui, python/desktop/remote downloader" # EDIT
+keywords = [
+    "aria2",
+    "downloader",
+    "gui",
+    "server",
+    "python",
+    "desktop",
+    "remote",
+] # EDIT
 # https://pypi.org/classifiers/
 classifiers = [
     "Programming Language :: Python :: 3.8",
@@ -53,8 +61,8 @@ dev_docs = [
 
 
 [project.urls]
-Documentation = "https://WSH032.github.io/pyproject-template/"  # EDIT
-"Source code" = "https://github.com/WSH032/pyproject-template/" # EDIT
+Documentation = "https://WSH032.github.io/aria2-server-gui/"
+"Source code" = "https://github.com/WSH032/aria2-server-gui/"
 
 
 # https://hatch.pypa.io/latest/config/metadata/#cli
@@ -70,13 +78,14 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # https://hatch.pypa.io/latest/plugins/builder/wheel/#default-file-selection
 # https://hatch.pypa.io/latest/config/build/#packages
+sources = ["src"]
 
 
 [tool.hatch.version]
 # refer to: https://github.com/frankie567/hatch-regex-commit
 source = "regex_commit"
 commit_extra_args = ["-e"]
-path = "src/pyproject_template/__init__.py" # EDIT: repo name
+path = "src/aria2_server/__init__.py"
 # NOTE: `chore` is required by commitlint
 commit_message = "chore(version): 🚀 bump version v{current_version} → v{new_version}"
 tag_message = "🚀 bump version v{current_version} → v{new_version}"
@@ -96,7 +105,7 @@ features = ["dev_test"]
 test = "pytest tests/ --cov --cov-report=xml --cov-report=html"
 type-check = [
     "pyright .",
-    "pyright --verifytypes pyproject_template --ignoreexternal", # EDIT: change `pyproject_template` to your package name
+    "pyright --verifytypes aria2_server --ignoreexternal",
 ]
 
 
@@ -210,7 +219,7 @@ reportMissingParameterType = true
 # https://coverage.readthedocs.io/en/7.3.2/config.html#run
 [tool.coverage.run]
 branch = true
-source = ['pyproject_template'] # EDIT
+source = ['aria2_server']
 
 # https://coverage.readthedocs.io/en/7.3.2/config.html#report
 [tool.coverage.report]
