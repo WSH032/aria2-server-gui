@@ -163,3 +163,6 @@ Untitled*.py
 .venv-default/
 .venv-docs/
 .venv-fmt/
+
+# nicegui session data
+.nicegui/

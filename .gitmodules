@@ -1,0 +1,3 @@
+[submodule "src/aria2_server/static/AriaNg"]
+	path = src/aria2_server/static/AriaNg
+	url = https://github.com/mayswind/AriaNg-DailyBuild

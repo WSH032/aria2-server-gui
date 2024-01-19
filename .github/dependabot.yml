@@ -27,3 +27,9 @@ updates:
     #     update-types:
     #       - "minor"
     #       - "patch"
+
+  # submodules for AriaNg
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "weekly"

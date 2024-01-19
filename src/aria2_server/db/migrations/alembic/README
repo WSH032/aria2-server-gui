@@ -1,0 +1,29 @@
+# Generic single-database configuration with an async dbapi
+
+## Usage
+
+Use following command to run migrations, instead of `alembic` command.
+
+check `aria2_server/db/migrations/__init__.py` for more details.
+
+### upgrade
+
+```bash
+python -m aria2_server.db.migrations upgrade --help
+```
+
+### revision
+
+```bash
+python -m aria2_server.db.migrations revision --help
+```
+
+**Then, check whether code of `aria2_server/db/migrationsalembic/versions/{new_version}.py` is correct**.
+
+## Ref
+
+- <https://hellowac.github.io/alembic-doc-zh/zh/_front_matter.html>
+- <https://juejin.cn/post/7077022949374443533>
+
+- <https://www.starlette.io/database/#migrations>
+- <https://alembic.sqlalchemy.org/>

@@ -32,18 +32,33 @@ dynamic = ["version"]
 # NOTE: version constraints
 # https://iscinumpy.dev/post/bound-version-constraints/
 
-dependencies = [] # EDIT
+dependencies = [
+    "pydantic == 2.*",
+    "fastapi >= 0.108, < 1",
+    "nicegui >= 1.4.8, < 2",
+    "uvicorn[standard] >= 0.22, < 1",
+    "typing_extensions >= 4.6, < 5",
+    # db
+    "sqlalchemy == 2.*",
+    "alembic >= 1.13, < 2",
+    # auth
+    "fastapi-users[sqlalchemy] >= 12.1, < 13",
+    "aiosqlite >=0.19, < 1",
+    # config
+    "tomli == 2.*",
+]
 
 [project.optional-dependencies]
+dev = ["Babel==2.14.0"]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_fmt = [
-    "ruff==0.1.9",
+    "ruff==0.1.13",
     "codespell==2.2.6",
     "tomli",            # tomli needed for `codespell`
 ]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_test = [
-    "pyright == 1.1.344",
+    "pyright == 1.1.346",
     "pytest==7.4.4",
     "pytest-cov== 4.1.0",
     "pytest-timeout==2.2.0",
@@ -66,8 +81,8 @@ Documentation = "https://WSH032.github.io/aria2-server-gui/"
 
 
 # https://hatch.pypa.io/latest/config/metadata/#cli
-# [project.scripts]
-# EDIT: add or delete here
+[project.scripts]
+aria2-server = "aria2_server:main"
 
 
 [build-system]
@@ -95,8 +110,8 @@ check_dirty = false
 
 
 [tool.hatch.envs.default]
-path = ".venv-default"  # NOTE: Do not change the path, it's used in github action cache
-features = ["dev_test"]
+path = ".venv-default"         # NOTE: Do not change the path, it's used in github action cache
+features = ["dev", "dev_test"]
 
 # NOTE: Do not change the scripts name, it's used in pre-commit local hook
 [tool.hatch.envs.default.scripts]
@@ -105,7 +120,9 @@ features = ["dev_test"]
 test = "pytest tests/ --cov --cov-report=xml --cov-report=html"
 type-check = [
     "pyright .",
-    "pyright --verifytypes aria2_server --ignoreexternal",
+
+    # FIXME, TODO: when we release v1.0, we will enable pyright verifytypes check
+    # "pyright --verifytypes aria2_server --ignoreexternal",
 ]
 
 
@@ -190,20 +207,33 @@ ignore = [
     "ISC001",
     # "D418",    # Function decorated with `@overload` shouldn't contain a docstring
     # "SIM108",  # if-else-block-instead-of-if-exp
+    "B008", # function-call-in-default-argument; conflicts with fastapi depends injection
+
+    # FIXME, TODO: when we release v0.1, we will add docstring
+    "D",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"src/aria2_server/db/migrations/alembic/*" = ["D"]
+"src/*" = ["PT018"]
 
 # https://docs.astral.sh/ruff/settings/#pydocstyle
 [tool.ruff.pydocstyle]
 convention = "google"
 
-# [tool.ruff.flake8-tidy-imports]
-# ban-relative-imports = "all"
+[tool.ruff.lint.isort]
+known-first-party = ["aria2_server"]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 
 # https://microsoft.github.io/pyright/#/configuration
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.8"
+pythonPlatform = "All"
+# rules
 reportUnusedImport = "warning"
 reportUnusedFunction = "warning"
 reportUnusedExpression = "warning"
@@ -240,7 +270,7 @@ exclude_also = [
 
 [tool.codespell]
 # https://github.com/codespell-project/codespell/issues/1887
-skip = "./htmlcov,./site"
+skip = "./htmlcov,./site,./src/aria2_server/static/AriaNg"
 
 
 [tool.pytest.ini_options]
