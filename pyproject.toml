@@ -37,7 +37,7 @@ dependencies = [] # EDIT
 [project.optional-dependencies]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_fmt = [
-    "ruff==0.1.9",
+    "ruff==0.1.14",
     "codespell==2.2.6",
     "tomli",            # tomli needed for `codespell`
 ]
