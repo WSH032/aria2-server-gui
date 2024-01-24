@@ -4,6 +4,8 @@ from typing import Union
 
 import nicegui
 from fastapi import APIRouter, Depends, FastAPI
+from fastapi.routing import APIRoute
+from nicegui import APIRouter as GuiRouter
 from nicegui import app as _app
 from nicegui import ui
 from nicegui.server import Server as NiceguiServer
@@ -25,11 +27,9 @@ from aria2_server.app.core._auth import (
 from aria2_server.app.core._server_config import get_server_config_from_db
 from aria2_server.app.core._tools import (
     NamepaceMixin,
-    get_page_routes,
     make_args_required,
 )
 from aria2_server.static import favicon
-from aria2_server.types._types import DecoratedCallable
 
 __all__ = ("Server", "auth_dependency_helper_")
 
@@ -42,25 +42,25 @@ auth_dependency_helper_ = AuthRedirectDependency(
 auth_dependency_helper_.require_superuser = False
 
 _auth_dependency = auth_dependency_helper_.auth_redirect_dependency
-_ignore_auth_exception = auth_dependency_helper_.ignore_exception
 
 
-def _ignore_auth_exception_on_ui_page(
-    original_endpoint: DecoratedCallable,
-) -> DecoratedCallable:
-    """Can only be used on `@ui.page`.
-
-    Dont use it on `@nicegui.APIrouter.page`
-    """
-    page_routes = get_page_routes(original_endpoint)
-    assert len(page_routes) == 1, "page route not found, or found multiple routes"
-    page_route = page_routes[0]
-    _ignore_auth_exception(page_route.endpoint)
-    return original_endpoint
+class _AllowUnauthRouter(GuiRouter):
+    def ignore_all_endpoints(self, auth_dependency_helper_: AuthRedirectDependency, /):
+        """Call this method after all endpoints are added to this router."""
+        for route in self.routes:
+            assert isinstance(route, APIRoute)
+            auth_dependency_helper_.ignore_exception(route.endpoint)
 
 
-# ui router
-@ui.page("/", dependencies=[Depends(_auth_dependency)])
+_gui_router = GuiRouter()
+_api_router = APIRouter(prefix="/api")
+_allow_unauth_router = _AllowUnauthRouter()
+
+
+##### ui router #####
+
+
+@_gui_router.page("/", dependencies=[Depends(_auth_dependency)])  # type: ignore
 def index():
     with ui.card().classes("absolute-center"):
         ui.markdown("## Welcome to Aria2 Server")
@@ -68,8 +68,7 @@ def index():
         ui.button("Account", on_click=lambda: ui.open("/account"))
 
 
-@_ignore_auth_exception_on_ui_page
-@ui.page("/account")
+@_allow_unauth_router.page("/account")  # type: ignore
 def account(user: Union[User, None] = Depends(_auth_dependency)):
     if user is None:
         with ui.card().classes("absolute-center"):
@@ -105,17 +104,27 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
                     ).action("/api/auth/logout")
 
 
+##### api router #####
+
+_api_router.include_router(_api.auth.auth_router, prefix="/auth", tags=["auth"])
+_api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users"])
+
+
+##### assembly #####
+
 _app.mount(
     "/AriaNg",
     aria_ng_app(FastAPI(dependencies=[Depends(_auth_dependency)])),
     name="AriaNg",
 )
-
-# api router
-_api_router = APIRouter(prefix="/api")
-_api_router.include_router(_api.auth.auth_router, prefix="/auth", tags=["auth"])
-_api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users"])
 _app.include_router(_api_router)
+_app.include_router(_gui_router)
+_app.include_router(_allow_unauth_router)
+# ignore auth exception for all endpoints in _allow_unauth_router
+_allow_unauth_router.ignore_all_endpoints(auth_dependency_helper_)
+
+
+##### utils #####
 
 
 class _ServerUtils(NamepaceMixin):
