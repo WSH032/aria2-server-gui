@@ -3,7 +3,7 @@ from typing import Optional, Sequence
 
 from aria2_server.db.migrations import revision, upgrade
 
-__all__ = ("main", "argparser")
+__all__ = ("argparser", "main")
 
 # TODO: add docs/help
 argparser = argparse.ArgumentParser()

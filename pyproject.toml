@@ -52,7 +52,7 @@ dependencies = [
 dev = ["Babel==2.14.0"]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_fmt = [
-    "ruff==0.1.13",
+    "ruff==0.1.14",
     "codespell==2.2.6",
     "tomli",            # tomli needed for `codespell`
 ]
@@ -155,6 +155,10 @@ docstring-code-format = true
 
 # https://docs.astral.sh/ruff/rules/
 [tool.ruff]
+preview = true
+explicit-preview-rules = true
+# we use `extend-select` to enable preview rules
+extend-select = ["RUF022"] # unsorted-dunder-all
 select = [
     "E",      # pycodestyle errors
     "W",      # pycodestyle warnings

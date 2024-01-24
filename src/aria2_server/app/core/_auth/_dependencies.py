@@ -56,9 +56,9 @@ class AuthRedirectDependency:
         )
 
         # HACK: this is fastapi-users typing issue
-        authenticator_backends: Sequence[
-            AuthenticationBackend[User, UUID_ID]
-        ] = self.fastapi_users.authenticator.backends  # pyright: ignore[reportUnknownMemberType]
+        authenticator_backends: Sequence[AuthenticationBackend[User, UUID_ID]] = (
+            self.fastapi_users.authenticator.backends
+        )  # pyright: ignore[reportUnknownMemberType]
 
         # we only design it for cookie_database backend currently
         assert (

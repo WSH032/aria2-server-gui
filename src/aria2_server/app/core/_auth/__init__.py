@@ -8,8 +8,8 @@ from aria2_server.app.core._auth._core import (
 from aria2_server.app.core._auth._dependencies import AuthRedirectDependency
 
 __all__ = (
-    "AuthRedirectDependency",
     "AUTH_COOKIE_NAME",
+    "AuthRedirectDependency",
     "User",
     "UserManager",
     "fastapi_users_helper",

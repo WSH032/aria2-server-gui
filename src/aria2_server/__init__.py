@@ -2,7 +2,7 @@
 
 from aria2_server.app.main import main
 
-__all__ = ("main", "__version__")
+__all__ = ("__version__", "main")
 
 # DO NOT EDIT THE `__version__` MANUALLY.
 # Use `hatch version {new_version}` instead.

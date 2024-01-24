@@ -9,11 +9,11 @@ from aria2_server.db.base import Base
 
 __all__ = (
     "alembic_ini",
-    "script_location",
     "get_default_cfg",
-    "upgrade",
     "revision",
     "run_async_upgrade",
+    "script_location",
+    "upgrade",
 )
 
 _here = Path(__file__).parent

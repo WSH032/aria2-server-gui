@@ -4,13 +4,13 @@ from nicegui import ui
 from typing_extensions import Self
 
 __all__ = (
+    "EmailInput",
+    "PasswordInput",
     "QForm",
     "StyledForm",
     "StyledInput",
-    "EmailInput",
-    "PasswordInput",
-    "SubmitButton",
     "StyledLabel",
+    "SubmitButton",
 )
 
 

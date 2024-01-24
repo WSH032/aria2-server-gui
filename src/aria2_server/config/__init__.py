@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from aria2_server.config import schemas
 from aria2_server.config.schemas import Config
 
-__all__ = ("GLOBAL_CONFIG", "CONFIG_ENV", "reload", "schemas")
+__all__ = ("CONFIG_ENV", "GLOBAL_CONFIG", "reload", "schemas")
 
 CONFIG_ENV = "ARIA2_SERVER_CONFIG"
 

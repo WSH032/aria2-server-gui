@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from aria2_server.static import favicon
 
-__all__ = ("Config", "Server", "Aria2")
+__all__ = ("Aria2", "Config", "Server")
 
 _Ipv4HostType = Literal["127.0.0.1", "0.0.0.0"]
 _Ipv6HostType = Literal["::1", "::"]

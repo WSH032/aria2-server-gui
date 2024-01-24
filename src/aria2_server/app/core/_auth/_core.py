@@ -18,10 +18,10 @@ from aria2_server.db.user import User, get_user_db
 
 __all__ = (
     "AUTH_COOKIE_NAME",
-    "UserManager",
-    "get_user_manager",
-    "fastapi_users_helper",
     "User",
+    "UserManager",
+    "fastapi_users_helper",
+    "get_user_manager",
 )
 
 
