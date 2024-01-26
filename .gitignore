@@ -166,3 +166,6 @@ Untitled*.py
 
 # nicegui session data
 .nicegui/
+
+# config file for testing
+aria2-server-config.toml

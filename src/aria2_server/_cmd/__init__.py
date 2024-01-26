@@ -4,18 +4,23 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import tomli
 from pydantic import ValidationError
 
-from aria2_server.app.main import main as app_main
-from aria2_server.config import reload
-from aria2_server.config.schemas import Config
+# NOTE: had better NOT to import any `aria2_server` modules before calling `reload()` in `main()`
+
+if TYPE_CHECKING:
+    from aria2_server.config.schemas import Config
+
 
 __all__ = ("main",)
 
 
-def _load_config_from_file(file: Path) -> Config:
+def _load_config_from_file(file: Path) -> "Config":
+    from aria2_server.config.schemas import Config
+
     try:
         with file.open("rb") as f:
             toml_dict = tomli.load(f)
@@ -41,6 +46,9 @@ _cmd_parser.add_argument(
 
 
 def main():
+    # NOTE: had better to call `reload()` at the very beginning of the program lifecycle
+    from aria2_server.config import reload
+
     cmd_opts = _cmd_parser.parse_args()
     conf_file_path = cmd_opts.config
 
@@ -54,6 +62,8 @@ def main():
         config = _load_config_from_file(conf_file_path)
         logging.info(f"Loaded config:\n{config.model_dump_json(indent=4)}")
         reload(config)
+
+    from aria2_server.app.main import main as app_main
 
     app_main()
 

@@ -14,7 +14,13 @@ _is_loaded = False
 def reload(
     config: Optional[schemas.Config] = None, _reload_nicegui: bool = False
 ) -> Config:
-    """This unstable api that only be used internally."""
+    """This unstable api that only be used internally.
+
+    This function should be called at the very beginning of the program lifecycle,
+    **before importing other `aria2_server` modules**,
+    and preferably only called once throughout.
+    Otherwise, it might fail to fully reload the new config.
+    """
 
     global _is_loaded, GLOBAL_CONFIG
 
