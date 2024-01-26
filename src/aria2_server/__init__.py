@@ -1,8 +1,6 @@
 """aria2 server with gui, python/desktop/remote downloader."""
 
-from aria2_server.app.main import main
-
-__all__ = ("__version__", "main")
+__all__ = ("__version__",)
 
 # DO NOT EDIT THE `__version__` MANUALLY.
 # Use `hatch version {new_version}` instead.

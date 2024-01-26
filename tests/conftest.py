@@ -9,6 +9,10 @@ with warnings.catch_warnings():
         category=DeprecationWarning,
         module="passlib",
     )
+    # do nothing, just trigger the `DeprecationWarning`
+    from aria2_server.app.main import (
+        main,  # noqa: F401 # pyright: ignore[reportUnusedImport]
+    )
     from aria2_server.config import reload, schemas
 
 new_config = schemas.Config(

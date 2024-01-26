@@ -1,44 +1,11 @@
-import logging
-import os
-from pathlib import Path
+import importlib
+import sys
 from typing import Optional
-
-import tomli
-from pydantic import ValidationError
 
 from aria2_server.config import schemas
 from aria2_server.config.schemas import Config
 
-__all__ = ("CONFIG_ENV", "GLOBAL_CONFIG", "reload", "schemas")
-
-CONFIG_ENV = "ARIA2_SERVER_CONFIG"
-
-
-def _load_config_from_file(file: Path):
-    try:
-        with file.open("rb") as f:
-            toml_dict = tomli.load(f)
-    except tomli.TOMLDecodeError as e:
-        logging.critical(f"Config file {file} is not a valid TOML file\n{e}")
-        raise
-
-    try:
-        return Config.model_validate(toml_dict)
-    except ValidationError as e:
-        logging.critical(f"Config file {file} is not a valid config file\n{e}")
-        raise
-
-
-def _load_config() -> Config:
-    _config_env_value = os.getenv(CONFIG_ENV)
-    if _config_env_value is not None:
-        _config_path = Path(_config_env_value)
-        if not _config_path.is_file():
-            raise ValueError(
-                f"Config file {_config_path}, which is set via environment var, does not exist"
-            )
-        return _load_config_from_file(Path(_config_env_value))
-    return Config()
+__all__ = ("GLOBAL_CONFIG", "reload")
 
 
 _is_loaded = False
@@ -48,8 +15,6 @@ def reload(
     config: Optional[schemas.Config] = None, _reload_nicegui: bool = False
 ) -> Config:
     """This unstable api that only be used internally."""
-    import importlib
-    import sys
 
     global _is_loaded, GLOBAL_CONFIG
 
@@ -59,11 +24,11 @@ def reload(
     # so the next time we call `reload()`, we can execute the following code.
     if not _is_loaded:
         _is_loaded = True
-        return _load_config()
+        return Config()
 
     # NOTE: assign before reloading modules,
     # so that we can reflect the changes to all modules.
-    GLOBAL_CONFIG = config if config is not None else _load_config()  # pyright: ignore[reportConstantRedefinition]
+    GLOBAL_CONFIG = config if config is not None else Config()  # pyright: ignore[reportConstantRedefinition]
 
     modules_name_need_reload = ["aria2_server"]
     if _reload_nicegui:

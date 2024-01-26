@@ -82,7 +82,7 @@ Documentation = "https://WSH032.github.io/aria2-server-gui/"
 
 # https://hatch.pypa.io/latest/config/metadata/#cli
 [project.scripts]
-aria2-server = "aria2_server:main"
+aria2-server = "aria2_server._cmd:main"
 
 
 [build-system]
