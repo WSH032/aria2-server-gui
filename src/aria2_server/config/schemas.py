@@ -4,7 +4,7 @@ from typing import Literal, Optional, Union
 
 from nicegui.language import Language
 from nicegui.native import find_open_port
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, FilePath, SecretStr
 
 from aria2_server.static import favicon
 
@@ -35,7 +35,7 @@ class Aria2(_ConfigedBaseModel):
         le=_HIGHEST_PORT,
     )
     rpc_secret: SecretStr = Field(default_factory=secrets.token_urlsafe)
-    conf_path: Optional[Path] = None
+    conf_path: Optional[FilePath] = None
 
 
 class Server(_ConfigedBaseModel):
