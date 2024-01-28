@@ -20,16 +20,21 @@ def _get_cmd_args() -> List[str]:
 
     # https://aria2.github.io/manual/en/html/aria2c.html
     logging.info(f"aria2c executable: {aria2c_exec}")
+    assert (
+        GLOBAL_CONFIG.aria2.enable_rpc == "true"
+    ), "aria2.enable_rpc can only be set to 'ture'"
     cmd_args = [
         aria2c_exec,
-        "--enable-rpc",
-        f"--rpc-listen-port={GLOBAL_CONFIG.server.aria2.rpc_listen_port}",
-        f"--rpc-secret={GLOBAL_CONFIG.server.aria2.rpc_secret.get_secret_value()}",
+        f"--rpc-listen-port={GLOBAL_CONFIG.aria2.rpc_listen_port}",
+        f"--rpc-secret={GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value()}",
+        f"--enable-rpc={GLOBAL_CONFIG.aria2.enable_rpc}",
+        f"--rpc-listen-all={GLOBAL_CONFIG.aria2.rpc_listen_all}",
+        f"--rpc-secure={GLOBAL_CONFIG.aria2.rpc_secure}",
     ]
-    if GLOBAL_CONFIG.server.aria2.rpc_listen_all:
-        cmd_args.append("--rpc-listen-all")
-    if GLOBAL_CONFIG.server.aria2.conf_path is not None:
-        cmd_args.append(f"--conf-path={GLOBAL_CONFIG.server.aria2.conf_path}")
+
+    if GLOBAL_CONFIG.aria2.conf_path is not None:
+        cmd_args.append(f"--conf-path={GLOBAL_CONFIG.aria2.conf_path}")
+
     return cmd_args
 
 

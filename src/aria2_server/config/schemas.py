@@ -10,6 +10,11 @@ from aria2_server.static import favicon
 
 __all__ = ("Aria2", "Config", "Server")
 
+
+_TrueStr = Literal["true"]
+_FalseStr = Literal["false"]
+_BoolStr = Literal[_TrueStr, _FalseStr]
+
 _Ipv4HostType = Literal["127.0.0.1", "0.0.0.0"]
 _Ipv6HostType = Literal["::1", "::"]
 _IpvAnyHostType = Literal[_Ipv4HostType, _Ipv6HostType]
@@ -28,13 +33,21 @@ class _ConfigedBaseModel(BaseModel):
 
 class Aria2(_ConfigedBaseModel):
     # https://aria2.github.io/manual/en/html/aria2c.html
-    rpc_listen_all: bool = False
+    rpc_listen_all: _BoolStr = "false"
     rpc_listen_port: int = Field(
         default_factory=lambda: find_open_port(6800, 7800),
         ge=_LOWEST_PORT,
         le=_HIGHEST_PORT,
     )
     rpc_secret: SecretStr = Field(default_factory=secrets.token_urlsafe)
+    rpc_secure: _BoolStr = "false"
+    # 👆 The above three properties will be used for aria2p in the future,
+    # do not change them.
+    #
+    # 👇 following properties just remind user don't set them in `aria2.conf`
+    # because we need these setting to initialize our modules,
+    # and we will set them as cli args.
+    enable_rpc: _TrueStr = "true"
     conf_path: Optional[FilePath] = None
 
 
@@ -54,8 +67,7 @@ class Server(_ConfigedBaseModel):
     sqlite_db: _SqliteDbPathType = _DEFAULT_DB_PATH
     expiration_second: int = Field(default=_DEFAULT_EXPIRATION_SECOND, gt=0)
 
-    aria2: Aria2 = Aria2()
-
 
 class Config(_ConfigedBaseModel):
     server: Server = Server()
+    aria2: Aria2 = Aria2()

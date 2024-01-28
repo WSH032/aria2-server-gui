@@ -61,6 +61,8 @@ def _init_superuser_in_db(*_) -> Generator[None, None, None]:
 
 
 class Lifespan(NamepaceMixin):
+    # NOTE: It is best to start aria2c within this lifespan,
+    # so that users can use aria2c without starting the app.
     lifespans: ClassVar[List[_LifespanType]] = [
         _init_db,
         _init_superuser_in_db,

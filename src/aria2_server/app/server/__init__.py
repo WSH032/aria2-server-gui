@@ -53,8 +53,8 @@ class _AllowUnauthRouter(GuiRouter):
 
 
 _gui_router = GuiRouter()
-_api_router = APIRouter(prefix="/api")
-_allow_unauth_router = _AllowUnauthRouter()
+_allow_unauth_gui_router = _AllowUnauthRouter()
+_api_router = APIRouter(prefix="/api", tags=["api"])
 
 
 ##### ui router #####
@@ -68,7 +68,7 @@ def index():
         ui.button("Account", on_click=lambda: ui.open("/account"))
 
 
-@_allow_unauth_router.page("/account")  # type: ignore
+@_allow_unauth_gui_router.page("/account")  # type: ignore
 def account(user: Union[User, None] = Depends(_auth_dependency)):
     if user is None:
         with ui.card().classes("absolute-center"):
@@ -106,6 +106,13 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
 
 ##### api router #####
 
+
+aria2_proxy_assembly = _api.aria2.build_aria2_proxy_on(
+    APIRouter(dependencies=[Depends(_auth_dependency)])
+)
+_app.on_shutdown(aria2_proxy_assembly.on_shutdown)  # pyright: ignore[reportUnknownMemberType]
+_api_router.include_router(aria2_proxy_assembly.router, prefix="/aria2", tags=["aria2"])
+
 _api_router.include_router(_api.auth.auth_router, prefix="/auth", tags=["auth"])
 _api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users"])
 
@@ -119,9 +126,9 @@ _app.mount(
 )
 _app.include_router(_api_router)
 _app.include_router(_gui_router)
-_app.include_router(_allow_unauth_router)
+_app.include_router(_allow_unauth_gui_router)
 # ignore auth exception for all endpoints in _allow_unauth_router
-_allow_unauth_router.ignore_all_endpoints(auth_dependency_helper_)
+_allow_unauth_gui_router.ignore_all_endpoints(auth_dependency_helper_)
 
 
 ##### utils #####
