@@ -11,7 +11,7 @@ from typing import (
 
 from sqlalchemy import exists
 
-from aria2_server.app.core._aria2 import lifespan as _aria2_lifespan
+from aria2_server.app.core._aria2 import Aria2WatchdogLifespan
 from aria2_server.app.core._auth import get_user_manager
 from aria2_server.app.core._tools import NamepaceMixin
 from aria2_server.db import get_async_session, migrations
@@ -66,7 +66,7 @@ class Lifespan(NamepaceMixin):
     lifespans: ClassVar[List[_LifespanType]] = [
         _init_db,
         _init_superuser_in_db,
-        _aria2_lifespan,
+        Aria2WatchdogLifespan,
     ]
 
     @classmethod
