@@ -3,13 +3,14 @@ from pathlib import Path
 from typing import Union
 
 import nicegui
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.routing import APIRoute
 from nicegui import APIRouter as GuiRouter
 from nicegui import app as _app
 from nicegui import ui
 from nicegui.server import Server as NiceguiServer
 
+from aria2_server._gui.components.aria_ng_iframe import AriaNgIframe
 from aria2_server._gui.components.q_form import (
     EmailInput,
     PasswordInput,
@@ -29,6 +30,7 @@ from aria2_server.app.core._tools import (
     NamepaceMixin,
     make_args_required,
 )
+from aria2_server.config import GLOBAL_CONFIG
 from aria2_server.static import favicon
 
 __all__ = ("Server", "auth_dependency_helper_")
@@ -66,6 +68,23 @@ def index():
         ui.markdown("## Welcome to Aria2 Server")
         ui.button("Enter AriaNg", on_click=lambda: ui.open("/AriaNg"))
         ui.button("Account", on_click=lambda: ui.open("/account"))
+
+
+@_gui_router.page("/AriaNg", dependencies=[Depends(_auth_dependency)])  # type: ignore
+def aria_ng(request: Request):
+    # TODO: add quasar drawer
+    # see https://nicegui.io/documentation/section_pages_routing#page_layout
+
+    # By default, NiceGUI provides a built-in padding around the content of the page,
+    # We can remove it by adding the "p-0" class to the content element
+    ui.query(".nicegui-content").classes("p-0")
+    with ui.card().tight().classes("w-screen h-screen"):
+        aria_ng_src = request.scope.get("root_path", "") + "/static/AriaNg"
+        AriaNgIframe(
+            aria_ng_src=aria_ng_src,
+            interface="api/aria2/jsonrpc",
+            secret=GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value(),
+        ).props("height=100%").props("width=100%").style("border: none;")
 
 
 @_allow_unauth_gui_router.page("/account")  # type: ignore
@@ -107,6 +126,9 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
 ##### api router #####
 
 
+# NOTE: aria2 proxy router must be protected by user auth,
+# because `AriaNgIframe` expose aria2c rpc-secret in `src` of <iframe>,
+# e.g <iframe src="...secret=...">
 aria2_proxy_assembly = _api.aria2.build_aria2_proxy_on(
     APIRouter(dependencies=[Depends(_auth_dependency)])
 )
@@ -119,11 +141,7 @@ _api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users
 
 ##### assembly #####
 
-_app.mount(
-    "/AriaNg",
-    aria_ng_app(FastAPI(dependencies=[Depends(_auth_dependency)])),
-    name="AriaNg",
-)
+_app.mount("/static/AriaNg", aria_ng_app(FastAPI()), name="AriaNg-static")
 _app.include_router(_api_router)
 _app.include_router(_gui_router)
 _app.include_router(_allow_unauth_gui_router)
