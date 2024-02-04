@@ -52,6 +52,7 @@ class Aria2(_ConfigedBaseModel):
 
 
 class Server(_ConfigedBaseModel):
+    # `nicegui.ui.run`
     host: _IpvAnyHostType = "0.0.0.0"
     port: int = Field(default=7800, ge=_LOWEST_PORT, le=_HIGHEST_PORT)
     title: str = "Aria2-Server"
@@ -64,6 +65,12 @@ class Server(_ConfigedBaseModel):
     endpoint_documentation: Literal["none", "internal", "page", "all"] = "page"
     favicon: Path = favicon
 
+    # kwargs of `nicegui.ui.run`
+    ssl_keyfile: Optional[FilePath] = None
+    ssl_certfile: Optional[FilePath] = None
+    ssl_keyfile_password: Optional[SecretStr] = None
+
+    # extra config for aria2-server
     sqlite_db: _SqliteDbPathType = _DEFAULT_DB_PATH
     expiration_second: int = Field(default=_DEFAULT_EXPIRATION_SECOND, gt=0)
 

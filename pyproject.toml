@@ -48,6 +48,12 @@ dependencies = [
     "aiosqlite >=0.19, < 1",
     # config
     "tomli == 2.*",
+    # ssl
+    # NOTE: DO NOT limit `cryptography` major version,
+    # see https://cryptography.io/en/latest/api-stability/
+    "cryptography",
+    # cli
+    "typer >= 0.9, < 1",
 ]
 
 [project.optional-dependencies]
@@ -84,7 +90,7 @@ Documentation = "https://WSH032.github.io/aria2-server-gui/"
 
 # https://hatch.pypa.io/latest/config/metadata/#cli
 [project.scripts]
-aria2-server = "aria2_server._cmd:main"
+aria2-server = "aria2_server.cli:cli"
 
 
 [build-system]

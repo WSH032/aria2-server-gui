@@ -169,3 +169,7 @@ Untitled*.py
 
 # config file for testing
 aria2-server-config.toml
+
+# https certificates
+cert.crt
+key.pem
