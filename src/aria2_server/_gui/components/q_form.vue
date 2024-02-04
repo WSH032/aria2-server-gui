@@ -3,6 +3,7 @@
 `method` prop: the method that you want to use, default to `post`
 `enctype` prop: the enctype that you want to use, default to `application/x-www-form-urlencoded`
 `redirect-url` prop: the url that you want to redirect to after succeed submission, default to `""` (current page)
+`req-secure-context` prop: whether to check if the form is submitted in secure context (https), default to `true`
  -->
 
 <template>
@@ -35,6 +36,9 @@ export default {
       },
       default: "application/x-www-form-urlencoded",
     },
+    reqSecureContext: {
+      type: Boolean,
+    },
   },
   data() {
     return {
@@ -51,6 +55,16 @@ export default {
       const REDIRECT_WAITING = 3000;  // 3s
       const vm = this;
       let submitNotify
+
+      // check if secure context
+      if (vm.reqSecureContext && !window.isSecureContext) {
+        Quasar.Notify.create({
+          type: 'negative',
+          message: "This form can only be submitted in secure context (https).",
+          timeout: TIMEOUT,
+        });
+        return;
+      }
 
       // prevent multiple submission
       if (vm.$data._submitingFlag) {

@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import ClassVar, Literal, Optional
 
 from nicegui import ui
 from typing_extensions import Self
@@ -15,8 +15,12 @@ __all__ = (
 
 
 class QForm(ui.element, component="q_form.vue"):
+    req_secure_context_by_default: ClassVar[Optional[bool]] = None
+
     def __init__(self) -> None:
         super().__init__()
+        if self.req_secure_context_by_default is not None:
+            self.req_secure_context(self.req_secure_context_by_default)
 
     def action(self, action: str, /) -> Self:
         self.props(f"action={action}")
@@ -36,6 +40,13 @@ class QForm(ui.element, component="q_form.vue"):
         /,
     ) -> Self:
         self.props(f"enctype={enctype}")
+        return self
+
+    def req_secure_context(self, req_secure_context: bool, /) -> Self:
+        if req_secure_context:
+            self.props("req-secure-context")
+        else:
+            self.props(remove="req-secure-context")
         return self
 
 

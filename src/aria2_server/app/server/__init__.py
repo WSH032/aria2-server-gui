@@ -36,6 +36,13 @@ from aria2_server.static import favicon
 __all__ = ("Server", "auth_dependency_helper_")
 
 
+class _SecureStyledForm(StyledForm):
+    pass
+
+
+_SecureStyledForm.req_secure_context_by_default = _api.auth.COOKIE_SECURE
+
+
 # auth dependency utils
 auth_dependency_helper_ = AuthRedirectDependency(
     redirect_url="/account", fastapi_users=fastapi_users_helper
@@ -92,7 +99,7 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
     if user is None:
         with ui.card().classes("absolute-center"):
             StyledLabel("Login your account to continue")
-            with StyledForm() as login_form:
+            with _SecureStyledForm() as login_form:
                 # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-login
                 EmailInput(name="username")
                 PasswordInput(name="password", pwd_autocomplete="current-password")
@@ -104,7 +111,7 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
         with ui.card().classes("absolute-center"):
             with ui.card():
                 StyledLabel("Edit your account")
-                with StyledForm() as patch_form:
+                with _SecureStyledForm() as patch_form:
                     # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#patch-me
                     EmailInput(name="email")
                     PasswordInput(name="password", pwd_autocomplete="new-password")
@@ -115,7 +122,7 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
 
             with ui.card():
                 StyledLabel("Logou your account")
-                with StyledForm() as logout_form:
+                with _SecureStyledForm() as logout_form:
                     # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-logout
                     SubmitButton("Logout")
                     logout_form.method("POST").enctype(

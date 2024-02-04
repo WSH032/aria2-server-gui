@@ -18,6 +18,7 @@ from aria2_server.db.user import User, get_user_db
 
 __all__ = (
     "AUTH_COOKIE_NAME",
+    "COOKIE_SECURE",
     "User",
     "UserManager",
     "fastapi_users_helper",
@@ -27,10 +28,14 @@ __all__ = (
 
 AUTH_COOKIE_NAME = "fastapiusersauth"
 
+COOKIE_SECURE = True
+
 
 # NOTE: Don't unpack `GLOBAL_CONFIG` outside of a function
 _cookie_transport = CookieTransport(
-    AUTH_COOKIE_NAME, cookie_max_age=GLOBAL_CONFIG.server.expiration_second
+    AUTH_COOKIE_NAME,
+    cookie_max_age=GLOBAL_CONFIG.server.expiration_second,
+    cookie_secure=COOKIE_SECURE,
 )
 
 

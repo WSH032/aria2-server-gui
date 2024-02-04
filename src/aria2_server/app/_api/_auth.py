@@ -8,10 +8,14 @@ from typing import Any, Sequence
 
 from fastapi_users.authentication import AuthenticationBackend
 
-from aria2_server.app.core._auth import fastapi_users_helper
+from aria2_server.app.core._auth import (
+    AUTH_COOKIE_NAME,
+    COOKIE_SECURE,
+    fastapi_users_helper,
+)
 from aria2_server.db.user.schemas import UserRead, UserUpdate
 
-__all__ = ("auth_router", "users_router")
+__all__ = ("AUTH_COOKIE_NAME", "COOKIE_SECURE", "auth_router", "users_router")
 
 
 # HACK: this is fastapi-users typing issue
