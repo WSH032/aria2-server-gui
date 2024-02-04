@@ -60,13 +60,13 @@ dependencies = [
 dev = ["Babel==2.14.0"]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_fmt = [
-    "ruff==0.1.14",
+    "ruff==0.2.0",
     "codespell==2.2.6",
     "tomli",            # tomli needed for `codespell`
 ]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_test = [
-    "pyright == 1.1.346",
+    "pyright == 1.1.349",
     "pytest==7.4.4",
     "pytest-cov== 4.1.0",
     "pytest-timeout==2.2.0",
@@ -162,7 +162,7 @@ build = "mkdocs build"
 docstring-code-format = true
 
 # https://docs.astral.sh/ruff/rules/
-[tool.ruff]
+[tool.ruff.lint]
 preview = true
 explicit-preview-rules = true
 # we use `extend-select` to enable preview rules
@@ -230,13 +230,13 @@ ignore = [
 "src/*" = ["PT018"]
 
 # https://docs.astral.sh/ruff/settings/#pydocstyle
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["aria2_server"]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
 

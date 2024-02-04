@@ -26,7 +26,7 @@ def _load_config_from_file(file: str) -> "Config":
         with typer.open_file(file, mode="rb") as f:
             # HACK, FIXME: This is type hint issue,
             # see https://github.com/microsoft/pyright/issues/831
-            toml_dict = tomli.load(f)  # pyright: ignore[reportGeneralTypeIssues]
+            toml_dict = tomli.load(f)  # pyright: ignore[reportArgumentType]
     except tomli.TOMLDecodeError as e:
         msg = typer.style(
             f"{file} is not a valid TOML file\n{e}",

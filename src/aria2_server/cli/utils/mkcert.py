@@ -36,10 +36,12 @@ def mkcert(
     san: Annotated[
         List[str],
         typer.Argument(
-            help=dedent("""\
+            help=dedent(
+                """\
                 Subject Alternative Names (SAN). Only support IP address and DNS name.
                 e.g: `192.168.137.1`, `localhost`\
-            """),
+            """
+            ),
         ),
     ],
     *,
@@ -66,11 +68,13 @@ def mkcert(
     key_file_password: Annotated[
         str,
         typer.Option(
-            help=dedent("""\
+            help=dedent(
+                """\
                 Password for the private key file.
                 If not specified, will create a private key file without password.
                 For security reasons, we strongly recommend setting a password for the private key file.\
-            """),
+            """
+            ),
             prompt=True,
         ),
     ] = "",
@@ -112,13 +116,15 @@ def mkcert(
 
     # Various details about who we are. For a self-signed certificate the
     # subject and issuer are always the same.
-    subject = issuer = x509.Name([
-        # x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        # x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
-        # x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name),
-        # x509.NameAttribute(NameOID.COMMON_NAME, "aria2-server.com"),
-    ])
+    subject = issuer = x509.Name(
+        [
+            # x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            # x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
+            # x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name),
+            # x509.NameAttribute(NameOID.COMMON_NAME, "aria2-server.com"),
+        ]
+    )
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)

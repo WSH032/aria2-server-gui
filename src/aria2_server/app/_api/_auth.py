@@ -15,9 +15,9 @@ __all__ = ("auth_router", "users_router")
 
 
 # HACK: this is fastapi-users typing issue
-_backends: Sequence[AuthenticationBackend[Any, Any]] = (
-    fastapi_users_helper.authenticator.backends
-)  # pyright: ignore[reportUnknownMemberType]
+_backends: Sequence[
+    AuthenticationBackend[Any, Any]
+] = fastapi_users_helper.authenticator.backends  # pyright: ignore[reportUnknownMemberType]
 # we only design it for cookie_database backend currently
 assert len(_backends) == 1, "not only one auth backend"
 _auth_backend = _backends[0]
