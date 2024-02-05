@@ -15,7 +15,9 @@ with warnings.catch_warnings():
     # NOTE: had better to call `reload()` at the very beginning of the program lifecycle
     new_config = schemas.Config(
         server=schemas.Server(
-            uvicorn_logging_level="info", show=False, sqlite_db=":memory:"
+            uvicorn_logging_level="info",
+            show=False,
+            extra=schemas.ServerExtra(sqlite_db=":memory:"),
         ),
     )
     reload(new_config)

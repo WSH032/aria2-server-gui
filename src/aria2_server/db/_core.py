@@ -19,7 +19,7 @@ _sqlite_url_prefix = "sqlite+aiosqlite:///"
 
 
 # TODO: Don't unpack `GLOBAL_CONFIG` outside of a function
-_sqlite_db_path = GLOBAL_CONFIG.server.sqlite_db
+_sqlite_db_path = GLOBAL_CONFIG.server.extra.sqlite_db
 
 if isinstance(_sqlite_db_path, Path):
     _sqlite_db_path.parent.mkdir(parents=True, exist_ok=True)

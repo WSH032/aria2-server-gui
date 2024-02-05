@@ -34,7 +34,7 @@ COOKIE_SECURE = True
 # NOTE: Don't unpack `GLOBAL_CONFIG` outside of a function
 _cookie_transport = CookieTransport(
     AUTH_COOKIE_NAME,
-    cookie_max_age=GLOBAL_CONFIG.server.expiration_second,
+    cookie_max_age=GLOBAL_CONFIG.server.extra.expiration_second,
     cookie_secure=COOKIE_SECURE,
 )
 
@@ -44,7 +44,7 @@ def _get_database_strategy(
 ) -> DatabaseStrategy[User, UUID_ID, AccessToken]:
     # NOTE: Don't unpack `GLOBAL_CONFIG` outside of a function
     return DatabaseStrategy[User, UUID_ID, AccessToken](
-        access_token_db, lifetime_seconds=GLOBAL_CONFIG.server.expiration_second
+        access_token_db, lifetime_seconds=GLOBAL_CONFIG.server.extra.expiration_second
     )
 
 
