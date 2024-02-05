@@ -38,7 +38,7 @@ _DEFAULT_PORT = _FIND_HIGHEST_PORT
 _DEFAULT_TITLE = "Aria2-Server"
 
 _DEFAULT_EXPIRATION_SECOND = 60 * 60 * 24 * 7  # 7 days
-_DEFAULT_DB_PATH: _SqliteDbPathType = Path("db.sqlite3")
+_DEFAULT_DB_PATH: _SqliteDbPathType = Path("aria2-server.db")
 
 _UVICORN_HTTPS_DOCS_URL = "https://www.uvicorn.org/deployment/#running-with-https"
 _NICEGUI_RUN_DOCS_URL = "https://nicegui.io/documentation/run#ui_run"

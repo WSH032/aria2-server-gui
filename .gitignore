@@ -173,3 +173,6 @@ aria2-server-config.toml
 # https certificates
 cert.crt
 key.pem
+
+# db
+aria2-server.db
