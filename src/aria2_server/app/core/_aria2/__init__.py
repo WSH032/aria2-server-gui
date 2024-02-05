@@ -8,13 +8,16 @@ import threading
 from collections import deque
 from contextlib import AbstractContextManager
 from subprocess import Popen
-from typing import List, Union
+from typing import List
 
 from typing_extensions import Self
 
 from aria2_server.config import GLOBAL_CONFIG
 
 __all__ = ("Aria2Popen", "Aria2WatchdogLifespan", "Aria2WatchdogThread")
+
+
+_DEFAULT_ARIA2_SHUTDOWN_TIMEOUT = 5
 
 
 def _get_cmd_args() -> List[str]:
@@ -76,52 +79,86 @@ class Aria2WatchdogThread(threading.Thread):
             raise ValueError("subprocess_deque_maxlen must be greater than 0")
 
         def watchdog_for_aria2_popen() -> None:
-            is_running_more_than_once = False
-            while not self._should_stop_watchdog:
-                if is_running_more_than_once:
+            _is_running_more_than_once = False
+            while not self.should_stop_watchdog.is_set():
+                if _is_running_more_than_once:
                     logging.warning(
                         "aria2c subprocess exited, perhaps the user closed it through the rpc interface, restarting..."
                     )
-                aria2_popen = Aria2Popen()
-                self.subprocess_deque.appendleft(aria2_popen)
+
+                with self._deque_read_write_lock:
+                    # NOTE: make sure `Aria2Popen()` and `appendleft` are atomic
+                    aria2_popen = Aria2Popen()
+                    self._subprocess_deque.appendleft(aria2_popen)
+                    # NOTE: set the event immediately after the first subprocess was put into the deque
+                    if not self.started.is_set():
+                        self.started.set()
+
                 # NOTE: before starting a new subprocess,
                 # must make sure the previous subprocess has been shutdown.
-                returncode = aria2_popen.wait()
+                # see https://docs.python.org/library/subprocess.html#subprocess.Popen.wait
+                aria2_popen.communicate()  # Don't use timeout here, we expect it to shutdown normally
+                returncode = aria2_popen.returncode
                 if returncode != 0:
                     logging.warning(f"aria2c subprocess exited with code {returncode}")
-                is_running_more_than_once = True
+
+                _is_running_more_than_once = True
 
         # If the subclass overrides the constructor,
         # it must make sure to invoke the base class constructor (Thread.__init__())
         # before doing anything else to the thread.
         # see https://docs.python.org/3/library/threading.html#threading.Thread
         super().__init__(target=watchdog_for_aria2_popen)
-        self._should_stop_watchdog = False
-        self.subprocess_deque: "deque[Aria2Popen]" = deque(
+
+        self.should_stop_watchdog = threading.Event()
+        self.started = threading.Event()
+        """Set the event immediately after the first subprocess was put into the deque"""
+        self._subprocess_deque: "deque[Aria2Popen]" = deque(
             maxlen=subprocess_deque_maxlen
         )
+        """when read or write this deque, must hold the lock"""
+        self._deque_read_write_lock = threading.RLock()
 
-    def stop_watchdog_only(self) -> None:
-        self._should_stop_watchdog = True
+    def get_deque_copy(self) -> "deque[Aria2Popen]":
+        with self._deque_read_write_lock:
+            return self._subprocess_deque.copy()
 
-    def get_current_subprocess(self) -> Union[Aria2Popen, None]:
-        try:
-            return self.subprocess_deque[0]
-        except IndexError:
-            return None
+    def get_current_subprocess(self) -> Aria2Popen:
+        if not self.started.is_set():
+            raise RuntimeError("The watchdog thread has not started yet")
+
+        subprocess_deque = self.get_deque_copy()
+        assert (
+            len(subprocess_deque) > 0
+        ), "after started, the subprocess deque should not be empty"
+        return subprocess_deque[0]
 
     def shutdown_current_subprocess(self) -> int:
         current_subprocess = self.get_current_subprocess()
-        if current_subprocess is None:
-            raise RuntimeError("No subprocess to shutdown")
 
-        current_subprocess.shutdown_gracefully()
-        return current_subprocess.wait()
+        # FIXME, TODO:
+        # NOTE: we need use `while` loop to ensure the subprocess has been shutdown,
+        # When subprocess is in the process of starting (i.e., not fully started yet),
+        # it may not be possible to send a termination signal properly.
+        while current_subprocess.poll() is None:
+            current_subprocess.shutdown_gracefully()
+            try:
+                # see https://docs.python.org/library/subprocess.html#subprocess.Popen.wait
+                current_subprocess.communicate(timeout=_DEFAULT_ARIA2_SHUTDOWN_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                logging.warning(
+                    "Timeout when shutdown aria2c subprocess, will retry again"
+                )
+        return current_subprocess.returncode
 
-    def stop_and_shutdown(self) -> None:
-        """After call this method, had better call `join` to wait for the thread to exit."""
-        self.stop_watchdog_only()
-        self.shutdown_current_subprocess()
+    def stop_and_shutdown(self) -> int:
+        """Before call this method, make sure the first subprocess has been started.
+        Check `self.started` event to ensure this.
+
+        After call this method, had better call `join` to wait for the thread to exit."""
+        # NOTE: stop watchdog first, then shutdown the current subprocess
+        self.should_stop_watchdog.set()
+        return self.shutdown_current_subprocess()
 
 
 class Aria2WatchdogLifespan(AbstractContextManager["Aria2WatchdogLifespan"]):
@@ -133,6 +170,13 @@ class Aria2WatchdogLifespan(AbstractContextManager["Aria2WatchdogLifespan"]):
         # TODO: check if aria2c is running before return, if not, raise an error.
         # maybe we can do it by trying to connect to aria2c rpc port by httpx.
         self.aria2_watchdog_thread.start()
+        # NOTE: wait for the watchdog thread to start,
+        # so that we can call `stop_and_shutdown` without RuntimeError
+        # when exit immediately after enter.
+        while not self.aria2_watchdog_thread.started.wait(timeout=1):
+            if not self.aria2_watchdog_thread.is_alive():
+                raise RuntimeError("The watchdog thread has exited unexpectedly")
+
         return self
 
     def __exit__(self, *_) -> None:
