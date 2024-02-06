@@ -1,6 +1,4 @@
-from typing import (
-    AsyncGenerator,
-)
+from typing import AsyncGenerator
 
 from fastapi import Depends
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
@@ -19,6 +17,7 @@ from aria2_server.db.user import User, get_user_db
 __all__ = (
     "AUTH_COOKIE_NAME",
     "COOKIE_SECURE",
+    "UUID_ID",
     "User",
     "UserManager",
     "fastapi_users_helper",

@@ -1,10 +1,13 @@
+# HACK,TODO: This is nicegui typing hint issue
+# pyright: reportUntypedFunctionDecorator=false, reportUnknownMemberType=false
+
 from inspect import Parameter
 from pathlib import Path
-from typing import Union
+from textwrap import dedent
+from typing import Optional, TypedDict
 
 import nicegui
-from fastapi import APIRouter, Depends, FastAPI, Request
-from fastapi.routing import APIRoute
+from fastapi import APIRouter, Depends, FastAPI, Request, status
 from nicegui import APIRouter as GuiRouter
 from nicegui import app as _app
 from nicegui import ui
@@ -21,9 +24,8 @@ from aria2_server._gui.components.q_form import (
 from aria2_server.app import _api
 from aria2_server.app._subapp import aria_ng_app
 from aria2_server.app.core._auth import (
-    AuthRedirectDependency,
     User,
-    fastapi_users_helper,
+    UserRedirect,
 )
 from aria2_server.app.core._server_config import get_server_config_from_db
 from aria2_server.app.core._tools import (
@@ -33,7 +35,7 @@ from aria2_server.app.core._tools import (
 from aria2_server.config import GLOBAL_CONFIG
 from aria2_server.static import favicon
 
-__all__ = ("Server", "auth_dependency_helper_")
+__all__ = ("Server",)
 
 
 class _SecureStyledForm(StyledForm):
@@ -44,32 +46,44 @@ _SecureStyledForm.req_secure_context_by_default = _api.auth.COOKIE_SECURE
 
 
 # auth dependency utils
-auth_dependency_helper_ = AuthRedirectDependency(
-    redirect_url="/account", fastapi_users=fastapi_users_helper
+
+_REQUIRE_ACTIVE = True
+_REQUIRE_VERIFIED = True
+_REQUIRE_SUPERUSER = False
+
+
+class _UserRedirectKwarg(TypedDict):
+    redirect_url: str
+    use_root_path: bool
+    status_code: int
+    code: int
+    active: bool
+    verified: bool
+    superuser: bool
+
+
+_user_redirect_kwargs = _UserRedirectKwarg(
+    redirect_url="/account",
+    use_root_path=True,
+    status_code=status.HTTP_303_SEE_OTHER,
+    code=status.WS_1008_POLICY_VIOLATION,
+    active=_REQUIRE_ACTIVE,
+    verified=_REQUIRE_VERIFIED,
+    superuser=_REQUIRE_SUPERUSER,
 )
-"""This is private, only for internal use."""
-auth_dependency_helper_.require_superuser = False
 
-_auth_dependency = auth_dependency_helper_.auth_redirect_dependency
-
-
-class _AllowUnauthRouter(GuiRouter):
-    def ignore_all_endpoints(self, auth_dependency_helper_: AuthRedirectDependency, /):
-        """Call this method after all endpoints are added to this router."""
-        for route in self.routes:
-            assert isinstance(route, APIRoute)
-            auth_dependency_helper_.ignore_exception(route.endpoint)
-
-
-_gui_router = GuiRouter()
-_allow_unauth_gui_router = _AllowUnauthRouter()
-_api_router = APIRouter(prefix="/api", tags=["api"])
+_user_redirect = UserRedirect(optional=False, **_user_redirect_kwargs)
+"""Will automatically raise an exception to redirect."""
+_opt_user_redirect = UserRedirect(optional=True, **_user_redirect_kwargs)
+"""Will not raise an exception to redirect, instead, return None."""
 
 
 ##### ui router #####
 
+_gui_router = GuiRouter()
 
-@_gui_router.page("/", dependencies=[Depends(_auth_dependency)])  # type: ignore
+
+@_gui_router.page("/", dependencies=[Depends(_user_redirect)])
 def index():
     with ui.card().classes("absolute-center"):
         ui.markdown("## Welcome to Aria2 Server")
@@ -77,7 +91,7 @@ def index():
         ui.button("Account", on_click=lambda: ui.open("/account"))
 
 
-@_gui_router.page("/AriaNg", dependencies=[Depends(_auth_dependency)])  # type: ignore
+@_gui_router.page("/AriaNg", dependencies=[Depends(_user_redirect)])
 def aria_ng(request: Request):
     # TODO: add quasar drawer
     # see https://nicegui.io/documentation/section_pages_routing#page_layout
@@ -94,11 +108,16 @@ def aria_ng(request: Request):
         ).props("height=100%").props("width=100%").style("border: none;")
 
 
-@_allow_unauth_gui_router.page("/account")  # type: ignore
-def account(user: Union[User, None] = Depends(_auth_dependency)):
+@_gui_router.page("/account")
+def account(user: Optional[User] = Depends(_opt_user_redirect)):
+    # before login
     if user is None:
+        # login form
         with ui.card().classes("absolute-center"):
-            StyledLabel("Login your account to continue")
+            if user is None:
+                StyledLabel("Login your account to continue")
+            else:
+                StyledLabel("Invalid user, please login again.")
             with _SecureStyledForm() as login_form:
                 # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-login
                 EmailInput(name="username")
@@ -107,8 +126,22 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
                 login_form.method("POST").enctype(
                     "application/x-www-form-urlencoded"
                 ).action("/api/auth/login").redirect_url("/")
+    # after login
     else:
         with ui.card().classes("absolute-center"):
+            # check whether user is valid
+            if _opt_user_redirect.check_user(user) is None:
+                _msg = dedent(
+                    """\
+                    Warning! This is a ivnalid account.
+                    Please logout and login again."""
+                )
+                _color = "red-600"
+                StyledLabel(_msg).tailwind.text_decoration_color(
+                    _color
+                ).text_decoration("underline").text_color(_color)
+
+            # edit form
             with ui.card():
                 StyledLabel("Edit your account")
                 with _SecureStyledForm() as patch_form:
@@ -119,7 +152,7 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
                     patch_form.method("PATCH").enctype("application/json").action(
                         "/api/users/me"
                     )
-
+            # logout form
             with ui.card():
                 StyledLabel("Logou your account")
                 with _SecureStyledForm() as logout_form:
@@ -132,15 +165,19 @@ def account(user: Union[User, None] = Depends(_auth_dependency)):
 
 ##### api router #####
 
+_api_router = APIRouter(prefix="/api", tags=["api"])
+
 
 # NOTE: aria2 proxy router must be protected by user auth,
 # because `AriaNgIframe` expose aria2c rpc-secret in `src` of <iframe>,
 # e.g <iframe src="...secret=...">
-aria2_proxy_assembly = _api.aria2.build_aria2_proxy_on(
-    APIRouter(dependencies=[Depends(_auth_dependency)])
+_aria2_proxy_assembly = _api.aria2.build_aria2_proxy_on(
+    APIRouter(dependencies=[Depends(_user_redirect)])
 )
-_app.on_shutdown(aria2_proxy_assembly.on_shutdown)  # pyright: ignore[reportUnknownMemberType]
-_api_router.include_router(aria2_proxy_assembly.router, prefix="/aria2", tags=["aria2"])
+_app.on_shutdown(_aria2_proxy_assembly.on_shutdown)
+_api_router.include_router(
+    _aria2_proxy_assembly.router, prefix="/aria2", tags=["aria2"]
+)
 
 _api_router.include_router(_api.auth.auth_router, prefix="/auth", tags=["auth"])
 _api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users"])
@@ -151,9 +188,6 @@ _api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users
 _app.mount("/static/AriaNg", aria_ng_app(FastAPI()), name="AriaNg-static")
 _app.include_router(_api_router)
 _app.include_router(_gui_router)
-_app.include_router(_allow_unauth_gui_router)
-# ignore auth exception for all endpoints in _allow_unauth_router
-_allow_unauth_gui_router.ignore_all_endpoints(auth_dependency_helper_)
 
 
 ##### utils #####
