@@ -7,11 +7,12 @@ from textwrap import dedent
 from typing import Optional, TypedDict
 
 import nicegui
-from fastapi import APIRouter, Depends, FastAPI, Request, status
+from fastapi import APIRouter, Depends, FastAPI, status
 from nicegui import APIRouter as GuiRouter
 from nicegui import app as _app
 from nicegui import ui
 from nicegui.server import Server as NiceguiServer
+from typing_extensions import Annotated
 
 from aria2_server._gui.components.aria_ng_iframe import AriaNgIframe
 from aria2_server._gui.components.q_form import (
@@ -32,6 +33,7 @@ from aria2_server.app.core._tools import (
     NamepaceMixin,
     make_args_required,
 )
+from aria2_server.app.core._utils.dependencies import get_root_path
 from aria2_server.config import GLOBAL_CONFIG
 from aria2_server.static import favicon
 
@@ -84,15 +86,28 @@ _gui_router = GuiRouter()
 
 
 @_gui_router.page("/", dependencies=[Depends(_user_redirect)])
-def index():
+def index(root_path: Annotated[str, Depends(get_root_path)]):
     with ui.card().classes("absolute-center"):
         ui.markdown("## Welcome to Aria2 Server")
-        ui.button("Enter AriaNg", on_click=lambda: ui.open("/AriaNg"))
-        ui.button("Account", on_click=lambda: ui.open("/account"))
+        ui.button("Enter AriaNg", on_click=lambda: ui.open(root_path + "/AriaNg"))
+        ui.button("Account", on_click=lambda: ui.open(root_path + "/account"))
 
 
 @_gui_router.page("/AriaNg", dependencies=[Depends(_user_redirect)])
-def aria_ng(request: Request):
+def aria_ng(root_path: Annotated[str, Depends(get_root_path)]):
+    # We stipulate that the `root_path` should either be empty (i.e '') or start with '/' and not end with '/'
+    # e.g. '', '/aria2-server'
+    raw_interface = "api/aria2/jsonrpc"
+
+    aria_ng_src = root_path + "/static/AriaNg"
+    interface = (
+        raw_interface
+        if root_path == ""
+        else root_path[1:]  # remove the leading '/'
+        + "/"  # add the trailing '/'
+        + raw_interface
+    )
+
     # TODO: add quasar drawer
     # see https://nicegui.io/documentation/section_pages_routing#page_layout
 
@@ -100,24 +115,23 @@ def aria_ng(request: Request):
     # We can remove it by adding the "p-0" class to the content element
     ui.query(".nicegui-content").classes("p-0")
     with ui.card().tight().classes("w-screen h-screen"):
-        aria_ng_src = request.scope.get("root_path", "") + "/static/AriaNg"
         AriaNgIframe(
             aria_ng_src=aria_ng_src,
-            interface="api/aria2/jsonrpc",
+            interface=interface,
             secret=GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value(),
         ).props("height=100%").props("width=100%").style("border: none;")
 
 
 @_gui_router.page("/account")
-def account(user: Optional[User] = Depends(_opt_user_redirect)):
+def account(
+    user: Annotated[Optional[User], Depends(_opt_user_redirect)],
+    root_path: Annotated[str, Depends(get_root_path)],
+):
     # before login
     if user is None:
         # login form
         with ui.card().classes("absolute-center"):
-            if user is None:
-                StyledLabel("Login your account to continue")
-            else:
-                StyledLabel("Invalid user, please login again.")
+            StyledLabel("Login your account to continue")
             with _SecureStyledForm() as login_form:
                 # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-login
                 EmailInput(name="username")
@@ -125,7 +139,7 @@ def account(user: Optional[User] = Depends(_opt_user_redirect)):
                 SubmitButton("Login")
                 login_form.method("POST").enctype(
                     "application/x-www-form-urlencoded"
-                ).action("/api/auth/login").redirect_url("/")
+                ).action(root_path + "/api/auth/login").redirect_url(root_path + "/")
     # after login
     else:
         with ui.card().classes("absolute-center"):
@@ -150,7 +164,7 @@ def account(user: Optional[User] = Depends(_opt_user_redirect)):
                     PasswordInput(name="password", pwd_autocomplete="new-password")
                     SubmitButton("Patch")
                     patch_form.method("PATCH").enctype("application/json").action(
-                        "/api/users/me"
+                        root_path + "/api/users/me"
                     )
             # logout form
             with ui.card():
@@ -160,7 +174,7 @@ def account(user: Optional[User] = Depends(_opt_user_redirect)):
                     SubmitButton("Logout")
                     logout_form.method("POST").enctype(
                         "application/x-www-form-urlencoded"
-                    ).action("/api/auth/logout")
+                    ).action(root_path + "/api/auth/logout")
 
 
 ##### api router #####

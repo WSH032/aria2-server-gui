@@ -5,7 +5,7 @@ from typing import Literal, Optional, Union
 
 from nicegui.language import Language
 from nicegui.native import find_open_port
-from pydantic import BaseModel, ConfigDict, Field, FilePath, SecretStr
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, FilePath, SecretStr
 from typing_extensions import Annotated
 
 from aria2_server.static import favicon
@@ -42,6 +42,16 @@ _DEFAULT_DB_PATH: _SqliteDbPathType = Path("aria2-server.db")
 
 _UVICORN_HTTPS_DOCS_URL = "https://www.uvicorn.org/deployment/#running-with-https"
 _NICEGUI_RUN_DOCS_URL = "https://nicegui.io/documentation/run#ui_run"
+
+
+def _check_root_path(value: str) -> str:
+    if value == "":
+        return value
+    if value.endswith("/"):
+        raise ValueError("must not end with '/'")
+    if not value.startswith("/"):
+        raise ValueError("must start with '/'")
+    return value
 
 
 class _ConfigedBaseModel(BaseModel):
@@ -239,6 +249,19 @@ class Server(_ConfigedBaseModel):
             )
         ),
     ] = None
+    root_path: Annotated[
+        str,
+        Field(
+            description=dedent(
+                """\
+                Set the ASGI root_path for applications submounted below a given URL path.
+                If the String is not '', it must start with '/' and not end with '/'.
+                See <https://fastapi.tiangolo.com/advanced/behind-a-proxy/>"""
+            ),
+            examples=["", "/aria2-server"],
+        ),
+        AfterValidator(_check_root_path),
+    ] = ""
 
     # extra config for aria2-server
     extra: ServerExtra = ServerExtra()

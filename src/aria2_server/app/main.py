@@ -31,6 +31,7 @@ def main() -> None:
             if GLOBAL_CONFIG.server.ssl_keyfile_password is not None
             else None
         )
+        root_path = GLOBAL_CONFIG.server.root_path
 
         if TYPE_CHECKING:
             import uvicorn
@@ -40,6 +41,7 @@ def main() -> None:
                 ssl_keyfile=ssl_keyfile,
                 ssl_certfile=ssl_certfile,
                 ssl_keyfile_password=ssl_keyfile_password,
+                root_path=root_path,
             )
 
         ########## 👆 ##########
@@ -66,6 +68,7 @@ def main() -> None:
                 ssl_keyfile=ssl_keyfile,
                 ssl_certfile=ssl_certfile,
                 ssl_keyfile_password=ssl_keyfile_password,
+                root_path=root_path,
             )
         except ssl.SSLError:
             msg = typer.style(

@@ -18,6 +18,7 @@ from typing_extensions import Annotated
 
 from aria2_server.app.core._auth._api_key import ConnAPIKeyCookie
 from aria2_server.app.core._auth._core import UserManager, fastapi_users_helper
+from aria2_server.app.core._utils.dependencies import get_root_path
 from aria2_server.db.access_token import AccessToken
 from aria2_server.db.user import User
 
@@ -90,6 +91,7 @@ class UserRedirect:
     async def __call__(
         self,
         conn: HTTPConnection,
+        root_path: Annotated[str, Depends(get_root_path)],
         user_manager: Annotated[
             UserManager, Depends(fastapi_users_helper.get_user_manager)
         ],
@@ -116,7 +118,7 @@ class UserRedirect:
 
         if not self.optional and (user is None or self.check_user(user) is None):
             if self.use_root_path:
-                _redirect_url = conn.scope.get("root_path", "") + self.redirect_url
+                _redirect_url = root_path + self.redirect_url
             else:
                 _redirect_url = self.redirect_url
 
