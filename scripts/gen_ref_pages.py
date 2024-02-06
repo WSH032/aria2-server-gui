@@ -18,7 +18,7 @@ NOTE: Keep the following directory structure:
 
 from pathlib import Path
 
-import mkdocs_gen_files  # type: ignore
+import mkdocs_gen_files  # pyright: ignore[reportMissingImports]
 
 nav = mkdocs_gen_files.Nav()
 

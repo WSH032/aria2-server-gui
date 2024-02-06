@@ -58,7 +58,7 @@ def reload(
 # Do some magic to skip `GLOBAL_CONFIG = reload()` when reloading this module,
 # so that we can re-set `GLOBAL_CONFIG` by `Global GLOBAL_CONFIG = ...` in `reload()`,
 try:
-    GLOBAL_CONFIG  # type: ignore # noqa: B018
+    GLOBAL_CONFIG  # noqa: B018  # pyright: ignore[reportUnusedExpression, reportUnboundVariable]
 except NameError:
     # following code will be executed when this module is imported for the first time,
     # and will not be executed when this module is reloaded
