@@ -5,14 +5,14 @@ from typing import Optional
 from aria2_server.config import schemas
 from aria2_server.config.schemas import Config
 
-__all__ = ("GLOBAL_CONFIG", "reload")
+__all__ = ("GLOBAL_CONFIG", "reload", "schemas")
 
 
 _is_loaded = False
 
 
 def reload(
-    config: Optional[schemas.Config] = None, _reload_nicegui: bool = False
+    config: Optional[schemas.Config] = None, _reload_nicegui: bool = True
 ) -> Config:
     """This unstable api that only be used internally.
 
@@ -20,6 +20,16 @@ def reload(
     **before importing other `aria2_server` modules**,
     and preferably only called once throughout.
     Otherwise, it might fail to fully reload the new config.
+
+    If you want to launch the app again, you should call this function.
+
+    Args:
+        config: The new config to be reloaded. If `None`, will reload the default config.
+            If you just want to reload for launch the app again, you should pass the previous config.
+            e.g. `reload(config.GLOBAL_CONFIG)`
+        _reload_nicegui: Whether to reload `nicegui` module.
+            Usually, you should set it to `True`, so that you can launch the whole app again.
+            The argument is private, we keep it here just for debugging purpose.
     """
 
     global _is_loaded, GLOBAL_CONFIG
@@ -40,6 +50,10 @@ def reload(
     if _reload_nicegui:
         modules_name_need_reload.append("nicegui")
 
+    # TODO: There is another way to reload `nicegui`,
+    # See https://github.com/zauberzeug/nicegui/blob/9dd03ee9d09d506e5504a0d03d349b22cd61d699/nicegui/testing/conftest.py#L54-L77
+
+    # NOTE: Reload the module consistently with the order it was imported.
     modules_need_reload = [
         module
         for module_name, module in sys.modules.copy().items()
