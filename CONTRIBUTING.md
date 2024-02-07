@@ -12,6 +12,16 @@ Contributions are welcome, and they are greatly appreciated! Every little bit he
 
 First, `fork` and `clone` the repository, then `cd` to the directory.
 
+!!! note
+    Note that we have a submodule in this repository, so you need to use `--recurse-submodules` to clone it.
+
+```shell
+# https://git-scm.com/book/en/v2/Git-Tools-Submodules
+git clone --recurse-submodules https://github.com/WSH032/aria2-server-gui.git
+
+cd aria2-server-gui
+```
+
 We use [`hatch`](https://github.com/pypa/hatch) and [`pre-commit`](https://pre-commit.com/) to manage our project.
 
 You can install them with:

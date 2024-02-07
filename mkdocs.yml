@@ -17,8 +17,14 @@ theme:
     - content.code.copy
     - content.code.annotate
     - navigation.instant
+    - navigation.instant.prefetch
     - navigation.instant.progress
+    - navigation.instant.preview
+    - navigation.top
     - navigation.tabs
+    - navigation.path
+    # - navigation.expand
+    # - navigation.tracking
     - search.suggest
     - search.highlight
     - search.share
@@ -27,9 +33,6 @@ theme:
     - content.action.view
     - content.tabs.link
     - content.tooltips
-    - navigation.top
-    # - navigation.expand
-    # - navigation.tracking
   # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#system-preference
   palette:
     # Palette toggle for automatic mode
@@ -98,7 +101,14 @@ markdown_extensions:
   - pymdownx.tilde
 
 plugins:
+  # # for static build
+  # # see: https://squidfunk.github.io/mkdocs-material/setup/building-for-offline-usage/
   # - offline
+  # - privacy
+  #
+  # # for optimized build
+  # see: https://squidfunk.github.io/mkdocs-material/setup/building-an-optimized-site/
+  # - optimize
   - search
   - gen-files:
       scripts:
@@ -107,13 +117,52 @@ plugins:
       nav_file: SUMMARY.md
   - section-index
   - mkdocstrings:
+      # Modified: https://github.com/mkdocstrings/python/blob/eaf9b8240069f7369f401fe048892043c8b173d3/mkdocs.yml#L140-L166
       default_handler: python
       handlers:
         python:
           # https://mkdocstrings.github.io/python/usage/#import
-          import: [] # EDIT
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
+            - https://fastapi.tiangolo.com/objects.inv
+            - https://typing-extensions.readthedocs.io/en/latest/objects.inv
+            - https://wsh032.github.io/fastapi-proxy-lib/objects.inv
+            - https://docs.sqlalchemy.org/objects.inv
+            - https://alembic.sqlalchemy.org/en/latest/objects.inv
+            - https://aiosqlite.omnilib.dev/en/stable/objects.inv
+            - https://cryptography.io/en/latest/objects.inv
           options:
             docstring_style: google
+            members_order: source
+            preload_modules:
+              - aria2_server
+            extensions:
+              - griffe_inherited_docstrings
+            # https://mkdocstrings.github.io/python/usage/configuration/headings/#parameter_headings
+            parameter_headings: true
+            # https://mkdocstrings.github.io/python/usage/configuration/docstrings/#show_if_no_docstring
+            show_if_no_docstring: true
+            # https://mkdocstrings.github.io/python/usage/configuration/docstrings/?h=merge_init_into_class#merge_init_into_class
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            # https://mkdocstrings.github.io/python/usage/configuration/headings/?h=heading_level#show_root_heading
+            heading_level: 1
+            show_root_heading: true
+            # https://mkdocstrings.github.io/python/usage/configuration/members/?h=inherited_members#inherited_members
+            inherited_members: true
+            # https://mkdocstrings.github.io/python/usage/configuration/signatures/#signature_crossrefs
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            # https://mkdocstrings.github.io/python/usage/configuration/headings/#show_symbol_type_toc
+            show_symbol_type_toc: true
+            show_symbol_type_heading: true
+            # https://mkdocstrings.github.io/python/usage/configuration/members/?h=summary#summary
+            summary: true
+            # https://mkdocstrings.github.io/python/usage/configuration/signatures/?h=unwrap_annotated#unwrap_annotated
+            unwrap_annotated: true
           paths: [src]
   # Remember: https://github.com/timvink/mkdocs-git-revision-date-localized-plugin#note-when-using-build-environments
   - git-revision-date-localized:
@@ -128,6 +177,10 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/WSH032/
+  # # TODO:
+  # # see: https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/
+  # version:
+  #   provider: mike
 
 watch:
   - src/

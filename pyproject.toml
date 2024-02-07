@@ -75,11 +75,15 @@ dev_test = [
 dev_docs = [
     "mkdocs-material == 9.5.3",
     "mkdocstrings[python] == 0.24.0",
+    # We need black to format code in mkdocstrings,
+    # see https://mkdocstrings.github.io/python/usage/configuration/signatures/#line_length
+    "black == 24.1.1",
     "mkdocs-gen-files == 0.5.0",
     "mkdocs-literate-nav == 0.6.1",
     "mkdocs-section-index == 0.3.8",
     "mkdocs-git-revision-date-localized-plugin == 1.2.2",
     "mkdocs-git-committers-plugin-2 == 2.2.2",
+    "griffe-inherited-docstrings == 1.0.0",
 ]
 
 

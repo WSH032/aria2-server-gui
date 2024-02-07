@@ -16,6 +16,7 @@ NOTE: Keep the following directory structure:
 └── 📄 mkdocs.yml
 """
 
+import re
 from pathlib import Path
 
 import mkdocs_gen_files  # pyright: ignore[reportMissingImports]
@@ -24,6 +25,13 @@ nav = mkdocs_gen_files.Nav()
 
 SRC = Path(__file__).parent.parent / "src"
 INDEX_MD_NAME = "index.md"
+
+# matches strings that start with an underscore followed by any character except another underscore.
+# exclude: _private
+# include: hello, __hello, or __hello__
+# see: https://mkdocstrings.github.io/python/usage/configuration/members/#filters
+EXCLUDE_PATTERN = re.compile(r"^_[^_]")
+
 
 for path in sorted(SRC.rglob("*.py")):
     module_path = path.relative_to(SRC).with_suffix("")
@@ -34,11 +42,19 @@ for path in sorted(SRC.rglob("*.py")):
 
     parts = tuple(module_path.parts)
 
+    # TODO: optimize the performance of this part.
+    # exclude private packages.
+    # parts[0] is the top-level package, so we don't apply the pattern to it.
+    # parts[-1] is the `.py` file (i.e., a module, not a package), so we don't apply the pattern to it.
+    if any(EXCLUDE_PATTERN.search(part) for part in parts[1:-1]):
+        continue
+
     if parts[-1] == "__init__":
         parts = parts[:-1]
         doc_path = doc_path.with_name(INDEX_MD_NAME)
         full_doc_path = full_doc_path.with_name(INDEX_MD_NAME)
-    elif parts[-1].startswith("_"):
+    # exclude private modules
+    elif EXCLUDE_PATTERN.search(parts[-1]):
         continue
 
     nav[parts] = doc_path.as_posix()

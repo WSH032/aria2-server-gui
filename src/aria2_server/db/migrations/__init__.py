@@ -21,7 +21,7 @@ _here = Path(__file__).parent
 alembic_ini = _here / "alembic.ini"
 assert alembic_ini.exists()
 
-script_location = _here / "alembic"
+script_location = _here / "_alembic"
 assert script_location.exists()
 
 
