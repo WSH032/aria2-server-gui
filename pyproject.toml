@@ -50,7 +50,7 @@ dev_test = [
 ]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_docs = [
-    "mkdocs-material == 9.5.3",
+    "mkdocs-material == 9.5.8",
     "mkdocstrings[python] == 0.24.0",
     "mkdocs-gen-files == 0.5.0",
     "mkdocs-literate-nav == 0.6.1",
