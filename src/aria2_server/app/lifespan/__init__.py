@@ -1,5 +1,7 @@
 import asyncio
+import logging
 from contextlib import ExitStack, asynccontextmanager, contextmanager
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
@@ -9,10 +11,12 @@ from typing import (
     List,
 )
 
+import typer
+from fastapi_users.exceptions import UserNotExists
 from sqlalchemy import exists
 
 from aria2_server.app.core._aria2 import Aria2WatchdogLifespan
-from aria2_server.app.core._auth import get_user_manager
+from aria2_server.app.core._auth import UserManager, get_user_manager
 from aria2_server.app.core._tools import NamepaceMixin
 from aria2_server.db import get_async_session, migrations
 from aria2_server.db.user import get_user_db
@@ -38,6 +42,31 @@ def _init_db(*_) -> Generator[None, None, None]:
     yield
 
 
+async def _check_if_user_existent(
+    user_manager: UserManager, *, email: str, password: str
+) -> bool:
+    """check if a user is existent in the `user_manager`.
+
+    If there exists a user in the `user_manager`
+    whose email and password match the arguments, return True;
+    otherwise, return False.
+
+    Warning:
+        This function can not be used in production environment,
+        because it have not considered the security issues.
+    """
+    try:
+        existent_user = await user_manager.get_by_email(email)
+    except UserNotExists:
+        return False
+
+    is_same_pwd, _ = user_manager.password_helper.verify_and_update(
+        password, existent_user.hashed_password
+    )
+
+    return is_same_pwd
+
+
 @contextmanager
 def _init_superuser_in_db(*_) -> Generator[None, None, None]:
     async def main():
@@ -48,13 +77,36 @@ def _init_superuser_in_db(*_) -> Generator[None, None, None]:
         async with get_async_session_context() as session, get_user_db_context(
             session
         ) as user_db, get_user_manager_context(user_db) as user_manager:
-            results = await session.execute(exists(user_db.user_table).select())
+            # If there are not any users in the database, create a default superuser.
+            _results = await session.execute(exists(user_db.user_table).select())
 
-            is_existent = results.scalar_one()
-            assert isinstance(is_existent, bool)
+            at_least_one_user_existent = _results.scalar_one()
+            assert isinstance(at_least_one_user_existent, bool)
 
-            if not is_existent:
+            if not at_least_one_user_existent:
                 await user_manager.create(_DEFAULT_SUPERUSER)
+
+            # Check if the default superuser exists, if so, issue a security warning.
+            email_to_check = _DEFAULT_SUPERUSER.email
+            password_to_check = _DEFAULT_SUPERUSER.password
+
+            if await _check_if_user_existent(
+                user_manager,
+                email=email_to_check,
+                password=password_to_check,
+            ):
+                _msg = dedent(
+                    f"""\
+                    The default user exists in the system, which is a security risk.
+                    please change the account as soon as possible.
+
+                    default user:
+                    ---
+                    email: {email_to_check}
+                    password: {password_to_check}
+                    ---"""
+                )
+                logging.warning(typer.style(_msg, fg=typer.colors.YELLOW, bold=True))
 
     asyncio.run(main())
     yield
