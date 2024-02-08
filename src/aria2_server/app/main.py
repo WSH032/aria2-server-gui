@@ -1,10 +1,8 @@
 import asyncio
-import logging
 import ssl
 from typing import TYPE_CHECKING
 
-import typer
-
+from aria2_server import logger
 from aria2_server.app.lifespan import Lifespan
 from aria2_server.app.server import Server
 from aria2_server.config import GLOBAL_CONFIG
@@ -70,13 +68,10 @@ def main() -> None:
                 ssl_keyfile_password=ssl_keyfile_password,
                 root_path=root_path,
             )
-        except ssl.SSLError:
-            msg = typer.style(
-                "SSL Error occurred, may be the password of the private key file is wrong.",
-                fg=typer.colors.WHITE,
-                bg=typer.colors.RED,
+        except ssl.SSLError as e:
+            logger.critical(
+                f"SSL Error occurred, may be the password of the private key file is wrong.\n{e}"
             )
-            logging.critical(msg)
             raise
 
 

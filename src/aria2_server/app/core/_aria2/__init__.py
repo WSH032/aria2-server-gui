@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import signal
@@ -12,6 +11,7 @@ from typing import List
 
 from typing_extensions import Self
 
+from aria2_server import logger
 from aria2_server.config import GLOBAL_CONFIG
 
 __all__ = ("Aria2Popen", "Aria2WatchdogLifespan", "Aria2WatchdogThread")
@@ -26,7 +26,7 @@ def _get_cmd_args() -> List[str]:
         raise RuntimeError("aria2c executable not found")
 
     # https://aria2.github.io/manual/en/html/aria2c.html
-    logging.info(f"aria2c executable: {aria2c_exec}")
+    logger.info(f"aria2c executable: {aria2c_exec}")
     assert (
         GLOBAL_CONFIG.aria2.enable_rpc == "true"
     ), "aria2.enable_rpc can only be set to 'ture'"
@@ -82,7 +82,7 @@ class Aria2WatchdogThread(threading.Thread):
             _is_running_more_than_once = False
             while not self.should_stop_watchdog.is_set():
                 if _is_running_more_than_once:
-                    logging.warning(
+                    logger.warning(
                         "aria2c subprocess exited, perhaps the user closed it through the rpc interface, restarting..."
                     )
 
@@ -100,7 +100,7 @@ class Aria2WatchdogThread(threading.Thread):
                 aria2_popen.communicate()  # Don't use timeout here, we expect it to shutdown normally
                 returncode = aria2_popen.returncode
                 if returncode != 0:
-                    logging.warning(f"aria2c subprocess exited with code {returncode}")
+                    logger.warning(f"aria2c subprocess exited with code {returncode}")
 
                 _is_running_more_than_once = True
 
@@ -146,7 +146,7 @@ class Aria2WatchdogThread(threading.Thread):
                 # see https://docs.python.org/library/subprocess.html#subprocess.Popen.wait
                 current_subprocess.communicate(timeout=_DEFAULT_ARIA2_SHUTDOWN_TIMEOUT)
             except subprocess.TimeoutExpired:
-                logging.warning(
+                logger.warning(
                     "Timeout when shutdown aria2c subprocess, will retry again"
                 )
         return current_subprocess.returncode

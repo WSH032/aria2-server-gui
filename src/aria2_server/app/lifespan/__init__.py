@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from contextlib import ExitStack, asynccontextmanager, contextmanager
 from textwrap import dedent
 from typing import (
@@ -11,10 +10,10 @@ from typing import (
     List,
 )
 
-import typer
 from fastapi_users.exceptions import UserNotExists
 from sqlalchemy import exists
 
+from aria2_server import logger
 from aria2_server.app.core._aria2 import Aria2WatchdogLifespan
 from aria2_server.app.core._auth import UserManager, get_user_manager
 from aria2_server.app.core._tools import NamepaceMixin
@@ -95,7 +94,7 @@ def _init_superuser_in_db(*_) -> Generator[None, None, None]:
                 email=email_to_check,
                 password=password_to_check,
             ):
-                _msg = dedent(
+                msg = dedent(
                     f"""\
                     The default user exists in the system, which is a security risk.
                     please change the account as soon as possible.
@@ -106,7 +105,7 @@ def _init_superuser_in_db(*_) -> Generator[None, None, None]:
                     password: {password_to_check}
                     ---"""
                 )
-                logging.warning(typer.style(_msg, fg=typer.colors.YELLOW, bold=True))
+                logger.warning(msg)
 
     asyncio.run(main())
     yield

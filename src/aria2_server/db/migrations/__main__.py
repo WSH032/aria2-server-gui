@@ -1,6 +1,7 @@
 import argparse
 from typing import Optional, Sequence
 
+from aria2_server import logger
 from aria2_server.db.migrations import revision, upgrade
 
 __all__ = ("argparser", "main")
@@ -19,7 +20,7 @@ revision_parser.add_argument("--message", "-m")
 def main(argv: Optional[Sequence[str]] = None) -> None:
     args = argparser.parse_args(argv)
 
-    print(f"args: {args}")
+    logger.debug(f"args: {args}")
 
     if args.command == "upgrade":
         upgrade(revision=args.revision)

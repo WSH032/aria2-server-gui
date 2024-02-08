@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -6,6 +5,8 @@ import tomli
 import typer
 from pydantic import ValidationError
 from typing_extensions import Annotated
+
+from aria2_server import logger
 
 # NOTE: had better NOT to import any `aria2_server` modules before calling `reload()` in `main()`
 
@@ -28,23 +29,13 @@ def _load_config_from_file(file: str) -> "Config":
             # see https://github.com/microsoft/pyright/issues/831
             toml_dict = tomli.load(f)  # pyright: ignore[reportArgumentType]
     except tomli.TOMLDecodeError as e:
-        msg = typer.style(
-            f"{file} is not a valid TOML file\n{e}",
-            fg=typer.colors.WHITE,
-            bg=typer.colors.RED,
-        )
-        logging.critical(msg)
+        logger.critical(f"{file} is not a valid TOML file\n{e}")
         raise
 
     try:
         return Config.model_validate(toml_dict)
     except ValidationError as e:
-        msg = typer.style(
-            f"{file} is not a valid config file\n{e}",
-            fg=typer.colors.WHITE,
-            bg=typer.colors.RED,
-        )
-        logging.critical(msg)
+        logger.critical(f"{file} is not a valid config file\n{e}")
         raise
 
 
@@ -62,9 +53,9 @@ def launch(
 ) -> None:
     """Launch aria2-server."""
     if config is not None:
-        logging.info(f"Loading config from: {config}")
+        logger.info(f"Loading config from: {config}")
         config_model = _load_config_from_file(str(config))
-        logging.info(f"Loaded config:\n{config_model.model_dump_json(indent=4)}")
+        logger.info(f"Loaded config:\n{config_model.model_dump_json(indent=4)}")
         from aria2_server.config import reload
 
         reload(config_model)
