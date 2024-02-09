@@ -4,7 +4,6 @@ from textwrap import dedent
 from typing import (
     Any,
     Callable,
-    ClassVar,
     ContextManager,
     Generator,
     List,
@@ -16,12 +15,11 @@ from sqlalchemy import exists
 from aria2_server import logger
 from aria2_server.app.core._aria2 import Aria2WatchdogLifespan
 from aria2_server.app.core._auth import UserManager, get_user_manager
-from aria2_server.app.core._tools import NamepaceMixin
 from aria2_server.db import get_async_session, migrations
 from aria2_server.db.user import get_user_db
 from aria2_server.db.user.schemas import UserCreate
 
-__all__ = ("Lifespan",)
+__all__ = ("context", "lifespans")
 
 
 _LifespanType = Callable[[], ContextManager[Any]]
@@ -111,19 +109,21 @@ def _init_superuser_in_db(*_) -> Generator[None, None, None]:
     yield
 
 
-class Lifespan(NamepaceMixin):
-    # NOTE: It is best to start aria2c within this lifespan,
-    # so that users can use aria2c without starting the app.
-    lifespans: ClassVar[List[_LifespanType]] = [
-        _init_db,
-        _init_superuser_in_db,
-        Aria2WatchdogLifespan,
-    ]
+# NOTE: It is best to start aria2c within this lifespan,
+# so that users can use aria2c without starting the app.
+lifespans: List[_LifespanType] = [
+    _init_db,
+    _init_superuser_in_db,
+    Aria2WatchdogLifespan,
+]
+"""We provide this list for you to append your own lifespan events,
+but you cannot modify the existing events."""
 
-    @classmethod
-    @contextmanager
-    def context(cls) -> Generator[None, None, None]:
-        with ExitStack() as stack:
-            for lifespan in cls.lifespans:
-                stack.enter_context(lifespan())
-            yield
+
+@contextmanager
+def context() -> Generator[None, None, None]:
+    """Launch the all lifespans in the `lifespans` list."""
+    with ExitStack() as stack:
+        for lifespan in lifespans:
+            stack.enter_context(lifespan())
+        yield
