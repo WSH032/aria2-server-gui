@@ -18,13 +18,12 @@ from aria2_server._gui.components.q_form import (
     StyledLabel,
     SubmitButton,
 )
-from aria2_server.app import _api
 from aria2_server.app._core.auth import (
     User,
     UserRedirect,
 )
 from aria2_server.app._core.utils.dependencies import get_root_path
-from aria2_server.app._subapp import aria_ng_app
+from aria2_server.app.server._core import _api, _subapp
 from aria2_server.config import GLOBAL_CONFIG
 
 
@@ -187,7 +186,7 @@ _api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users
 
 ##### assembly #####
 
-_app.mount("/static/AriaNg", aria_ng_app(FastAPI()), name="AriaNg-static")
+_app.mount("/static/AriaNg", _subapp.aria_ng_app(FastAPI()), name="AriaNg-static")
 _app.include_router(_api_router)
 _app.include_router(_gui_router)
 
