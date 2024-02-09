@@ -2,7 +2,7 @@ from functools import partial
 
 from fastapi import FastAPI
 
-from aria2_server.app.core._static_files import (
+from aria2_server.app._core.static_files import (
     StaticFiles,
     bind_static_files_to_app,
 )

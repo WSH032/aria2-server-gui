@@ -8,7 +8,7 @@ from typing import Any, Sequence
 
 from fastapi_users.authentication import AuthenticationBackend
 
-from aria2_server.app.core._auth import (
+from aria2_server.app._core.auth import (
     AUTH_COOKIE_NAME,
     COOKIE_SECURE,
     fastapi_users_helper,

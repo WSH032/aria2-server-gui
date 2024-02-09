@@ -16,9 +16,9 @@ from fastapi_users.authentication.strategy.db import (
 from fastapi_users_db_sqlalchemy import UUID_ID
 from typing_extensions import Annotated
 
-from aria2_server.app.core._auth._api_key import ConnAPIKeyCookie
-from aria2_server.app.core._auth._core import UserManager, fastapi_users_helper
-from aria2_server.app.core._utils.dependencies import get_root_path
+from aria2_server.app._core.auth._api_key import ConnAPIKeyCookie
+from aria2_server.app._core.auth._core import UserManager, fastapi_users_helper
+from aria2_server.app._core.utils.dependencies import get_root_path
 from aria2_server.db.access_token import AccessToken
 from aria2_server.db.user import User
 

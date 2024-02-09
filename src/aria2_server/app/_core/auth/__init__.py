@@ -1,5 +1,5 @@
-from aria2_server.app.core._auth._api_key import ConnAPIKeyCookie
-from aria2_server.app.core._auth._core import (
+from aria2_server.app._core.auth._api_key import ConnAPIKeyCookie
+from aria2_server.app._core.auth._core import (
     AUTH_COOKIE_NAME,
     COOKIE_SECURE,
     UUID_ID,
@@ -8,7 +8,7 @@ from aria2_server.app.core._auth._core import (
     fastapi_users_helper,
     get_user_manager,
 )
-from aria2_server.app.core._auth._dependencies import (
+from aria2_server.app._core.auth.dependencies import (
     UserRedirect,
 )
 

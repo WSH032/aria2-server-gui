@@ -19,12 +19,12 @@ from aria2_server._gui.components.q_form import (
     SubmitButton,
 )
 from aria2_server.app import _api
-from aria2_server.app._subapp import aria_ng_app
-from aria2_server.app.core._auth import (
+from aria2_server.app._core.auth import (
     User,
     UserRedirect,
 )
-from aria2_server.app.core._utils.dependencies import get_root_path
+from aria2_server.app._core.utils.dependencies import get_root_path
+from aria2_server.app._subapp import aria_ng_app
 from aria2_server.config import GLOBAL_CONFIG
 
 

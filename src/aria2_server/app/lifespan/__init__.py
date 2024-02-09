@@ -13,8 +13,8 @@ from fastapi_users.exceptions import UserNotExists
 from sqlalchemy import exists
 
 from aria2_server import logger
-from aria2_server.app.core._aria2 import Aria2WatchdogLifespan
-from aria2_server.app.core._auth import UserManager, get_user_manager
+from aria2_server.app._core.aria2 import Aria2WatchdogLifespan
+from aria2_server.app._core.auth import UserManager, get_user_manager
 from aria2_server.db import get_async_session, migrations
 from aria2_server.db.user import get_user_db
 from aria2_server.db.user.schemas import UserCreate
