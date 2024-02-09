@@ -1,8 +1,7 @@
 import asyncio
 from typing import Set
 
-from aria2_server.app import server
-from aria2_server.app.main import main
+from aria2_server.app import main, server
 
 
 def test_main() -> None:

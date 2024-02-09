@@ -23,6 +23,6 @@ with warnings.catch_warnings():
     reload(new_config)
 
     # do nothing, just trigger the `DeprecationWarning`
-    from aria2_server.app.main import (
+    from aria2_server.app import (
         main,  # noqa: F401 # pyright: ignore[reportUnusedImport]
     )

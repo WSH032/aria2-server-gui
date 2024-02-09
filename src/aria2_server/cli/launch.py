@@ -60,7 +60,7 @@ def launch(
 
         reload(config_model)
 
-    from aria2_server.app.main import main as app_main
+    from aria2_server.app import main as app_main
 
     app_main()
 

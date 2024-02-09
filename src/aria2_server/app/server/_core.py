@@ -193,6 +193,6 @@ _app.include_router(_gui_router)
 
 
 if __name__ == "__main__":
-    from aria2_server.app.main import main
+    from aria2_server.app import main
 
     main()
