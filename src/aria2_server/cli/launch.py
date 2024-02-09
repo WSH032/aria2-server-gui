@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -61,6 +62,17 @@ def launch(
         reload(config_model)
 
     from aria2_server.app import main as app_main
+    from aria2_server.config import GLOBAL_CONFIG
+    from aria2_server.logger import configure_default_logging
+
+    uvicorn_logging_level = GLOBAL_CONFIG.server.uvicorn_logging_level
+    if uvicorn_logging_level == "trace":
+        uvicorn_logging_level = "debug"
+
+    logging_level = logging.getLevelName(uvicorn_logging_level.upper())
+    assert isinstance(logging_level, int)
+
+    configure_default_logging(logging_level)
 
     app_main()
 

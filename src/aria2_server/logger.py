@@ -1,3 +1,9 @@
+"""The logger module for `aria2_server`.
+
+NOTE: This module will never import any other modules in `aria2_server`,
+    So, any other modules can import this module to use the logger.
+"""
+
 import functools
 import logging
 from typing import Any, Callable, TypeVar
@@ -5,8 +11,12 @@ from typing import Any, Callable, TypeVar
 import typer
 from typing_extensions import Concatenate, ParamSpec
 
+# NOTE: DO NOT import any `aria2_server` modules here,
+# because any other modules may import this module to use the logger.
+
 __all__ = (
     "LOGGER_NAME",
+    "configure_default_logging",
     "critical",
     "debug",
     "error",
@@ -96,3 +106,15 @@ warning = _build_colorized_logger_func(logger.warning)
 error = _build_colorized_logger_func(logger.error)
 exception = _build_colorized_logger_func(logger.exception)
 critical = _build_colorized_logger_func(logger.critical)
+
+
+def configure_default_logging(level: int) -> None:
+    """Configure the default logging settings for `aria2_server`.
+
+    Usually, this function is used by cli.
+    """
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)-5.5s [%(name)s] %(message)s",
+        datefmt="%H:%M:%S",
+    )

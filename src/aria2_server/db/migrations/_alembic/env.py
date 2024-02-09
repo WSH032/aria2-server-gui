@@ -12,7 +12,11 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+# NOTE: `no_logging_config` is a custom option used by `aria2-server`.
+if (
+    config.config_file_name is not None
+    and config.get_main_option("no_logging_config") != "true"
+):
     fileConfig(config.config_file_name)
 
 

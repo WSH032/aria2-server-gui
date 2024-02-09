@@ -34,14 +34,24 @@ def get_default_cfg() -> config.Config:
 
 
 upgrade = partial(command.upgrade, config=get_default_cfg(), revision="head")
+"""Note: this function is designed to be used in cli."""
 
 revision = partial(command.revision, config=get_default_cfg(), autogenerate=True)
+"""Note: this function is designed to be used in cli."""
 
 
 async def run_async_upgrade() -> None:
+    """This function is designed to be used as a library api.
+
+    The difference is that this function will not configure logging settings.
+    """
+
     # Refer: https://alembic.sqlalchemy.org/en/latest/cookbook.html#programmatic-api-use-connection-sharing-with-asyncio
     def run_upgrade(connection: Connection, cfg: config.Config) -> None:
         cfg.attributes["connection"] = connection
+        # NOTE: `no_logging_config` is a custom option used by `aria2-server`,
+        # see `env.py` for more details.
+        cfg.set_main_option("no_logging_config", "true")
         command.upgrade(cfg, "head")
 
     async with engine.begin() as conn:
