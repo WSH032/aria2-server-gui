@@ -14,14 +14,14 @@ from typing_extensions import Self
 # just import to run the code in that module
 import aria2_server.app.server._core  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from aria2_server import logger
-from aria2_server.app.server import utils
-from aria2_server.config import GLOBAL_CONFIG
-from aria2_server.types._types import (
+from aria2_server._types import (
     EndpointDocumentationType,
     IpvAnyHostType,
     LanguageType,
     UvicornLoggingLevelType,
 )
+from aria2_server.app.server import utils
+from aria2_server.config import GLOBAL_CONFIG
 
 __all__ = (
     "RunKwargs",

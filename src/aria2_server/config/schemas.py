@@ -7,8 +7,7 @@ from nicegui.native import find_open_port
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, FilePath, SecretStr
 from typing_extensions import Annotated
 
-from aria2_server.static import favicon
-from aria2_server.types._types import (
+from aria2_server._types import (
     BoolStr,
     EndpointDocumentationType,
     IpvAnyHostType,
@@ -17,6 +16,7 @@ from aria2_server.types._types import (
     TrueStr,
     UvicornLoggingLevelType,
 )
+from aria2_server.static import favicon
 
 __all__ = ("Aria2", "Config", "Server", "ServerExtra")
 
