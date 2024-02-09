@@ -1,44 +1,37 @@
 import secrets
 from pathlib import Path
 from textwrap import dedent
-from typing import Literal, Optional, Union
+from typing import Optional
 
-from nicegui.language import Language
 from nicegui.native import find_open_port
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, FilePath, SecretStr
 from typing_extensions import Annotated
 
 from aria2_server.static import favicon
+from aria2_server.types._types import (
+    BoolStr,
+    EndpointDocumentationType,
+    IpvAnyHostType,
+    LanguageType,
+    SqliteDbPathType,
+    TrueStr,
+    UvicornLoggingLevelType,
+)
 
 __all__ = ("Aria2", "Config", "Server", "ServerExtra")
 
-
-_TrueStr = Literal["true"]
-_FalseStr = Literal["false"]
-_BoolStr = Literal[_TrueStr, _FalseStr]
-
-_Ipv4HostType = Literal["127.0.0.1", "0.0.0.0"]
-_Ipv6HostType = Literal["::1", "::"]
-_IpvAnyHostType = Literal[_Ipv4HostType, _Ipv6HostType]
-_SqliteDbPathType = Union[Path, Literal[":memory:"]]
-
-_UvicornLoggingLevelType = Literal[
-    "critical", "error", "warning", "info", "debug", "trace"
-]
-
-_EndpointDocumentationType = Literal["none", "internal", "page", "all"]
 
 _LOWEST_PORT = 1024
 _HIGHEST_PORT = 65535
 _FIND_LOWEST_PORT = 6800
 _FIND_HIGHEST_PORT = 7800
 
-_DEFAULT_HOST: _IpvAnyHostType = "0.0.0.0"
+_DEFAULT_HOST: IpvAnyHostType = "0.0.0.0"
 _DEFAULT_PORT = _FIND_HIGHEST_PORT
 _DEFAULT_TITLE = "Aria2-Server"
 
 _DEFAULT_EXPIRATION_SECOND = 60 * 60 * 24 * 7  # 7 days
-_DEFAULT_DB_PATH: _SqliteDbPathType = Path("aria2-server.db")
+_DEFAULT_DB_PATH: SqliteDbPathType = Path("aria2-server.db")
 
 _UVICORN_HTTPS_DOCS_URL = "https://www.uvicorn.org/deployment/#running-with-https"
 _NICEGUI_RUN_DOCS_URL = "https://nicegui.io/documentation/run#ui_run"
@@ -66,7 +59,7 @@ class Aria2(_ConfigedBaseModel):
 
     # https://aria2.github.io/manual/en/html/aria2c.html
     rpc_listen_all: Annotated[
-        _BoolStr,
+        BoolStr,
         Field(
             description=dedent(
                 """\
@@ -96,7 +89,7 @@ class Aria2(_ConfigedBaseModel):
         ),
     )
     rpc_secure: Annotated[
-        _BoolStr,
+        BoolStr,
         Field(
             description=dedent(
                 """\
@@ -112,7 +105,7 @@ class Aria2(_ConfigedBaseModel):
     # because we need these setting to initialize our modules,
     # and we will set them as cli args.
     enable_rpc: Annotated[
-        _TrueStr,
+        TrueStr,
         Field(
             description=dedent(
                 """Can only be 'true', which means enable a JSON-RPC/XML-RPC server of aria2c."""
@@ -137,7 +130,7 @@ class ServerExtra(_ConfigedBaseModel):
     )
 
     sqlite_db: Annotated[
-        _SqliteDbPathType,
+        SqliteDbPathType,
         Field(
             description="The path of aria2-server's sqlite db file. If ':memory:', will create a in-memory db.",
         ),
@@ -162,7 +155,7 @@ class Server(_ConfigedBaseModel):
 
     # `nicegui.ui.run`
     host: Annotated[
-        _IpvAnyHostType, Field(description="The host of aria2-server")
+        IpvAnyHostType, Field(description="The host of aria2-server")
     ] = _DEFAULT_HOST
     port: Annotated[
         int,
@@ -190,11 +183,11 @@ class Server(_ConfigedBaseModel):
         ),
     ] = True
     language: Annotated[
-        Language,
+        LanguageType,
         Field(description="The quasar language theme of aria2-server."),
     ] = "en-US"
     uvicorn_logging_level: Annotated[
-        _UvicornLoggingLevelType,
+        UvicornLoggingLevelType,
         Field(
             description=dedent(
                 """\
@@ -204,7 +197,7 @@ class Server(_ConfigedBaseModel):
         ),
     ] = "warning"
     endpoint_documentation: Annotated[
-        _EndpointDocumentationType,
+        EndpointDocumentationType,
         Field(
             description=dedent(
                 f"""\

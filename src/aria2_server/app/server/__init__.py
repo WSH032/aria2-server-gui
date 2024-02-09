@@ -1,238 +1,174 @@
-# HACK,TODO: This is nicegui typing hint issue
-# pyright: reportUntypedFunctionDecorator=false, reportUnknownMemberType=false
-
-from inspect import Parameter
+import ssl
+from contextlib import ContextDecorator
 from pathlib import Path
-from textwrap import dedent
-from typing import Optional, TypedDict
+from types import TracebackType
+from typing import TYPE_CHECKING, Literal, Optional, Type, TypedDict, Union
 
 import nicegui
-from fastapi import APIRouter, Depends, FastAPI, status
-from nicegui import APIRouter as GuiRouter
-from nicegui import app as _app
+import nicegui.server
+import nicegui.ui
+from fastapi import FastAPI
 from nicegui import ui
-from nicegui.server import Server as NiceguiServer
-from typing_extensions import Annotated
+from typing_extensions import Self
 
-from aria2_server._gui.components.aria_ng_iframe import AriaNgIframe
-from aria2_server._gui.components.q_form import (
-    EmailInput,
-    PasswordInput,
-    StyledForm,
-    StyledLabel,
-    SubmitButton,
-)
-from aria2_server.app import _api
-from aria2_server.app._subapp import aria_ng_app
-from aria2_server.app.core._auth import (
-    User,
-    UserRedirect,
-)
-from aria2_server.app.core._server_config import get_server_config_from_db
-from aria2_server.app.core._tools import (
-    NamepaceMixin,
-    make_args_required,
-)
-from aria2_server.app.core._utils.dependencies import get_root_path
+# just import to run the code in that module
+import aria2_server.app.server._core  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from aria2_server import logger
+from aria2_server.app.server import utils
 from aria2_server.config import GLOBAL_CONFIG
-from aria2_server.static import favicon
-
-__all__ = ("Server",)
-
-
-class _SecureStyledForm(StyledForm):
-    pass
-
-
-_SecureStyledForm.req_secure_context_by_default = _api.auth.COOKIE_SECURE
-
-
-# auth dependency utils
-
-_REQUIRE_ACTIVE = True
-_REQUIRE_VERIFIED = True
-_REQUIRE_SUPERUSER = False
-
-
-class _UserRedirectKwarg(TypedDict):
-    redirect_url: str
-    use_root_path: bool
-    status_code: int
-    code: int
-    active: bool
-    verified: bool
-    superuser: bool
-
-
-_user_redirect_kwargs = _UserRedirectKwarg(
-    redirect_url="/account",
-    use_root_path=True,
-    status_code=status.HTTP_303_SEE_OTHER,
-    code=status.WS_1008_POLICY_VIOLATION,
-    active=_REQUIRE_ACTIVE,
-    verified=_REQUIRE_VERIFIED,
-    superuser=_REQUIRE_SUPERUSER,
+from aria2_server.types._types import (
+    EndpointDocumentationType,
+    IpvAnyHostType,
+    LanguageType,
+    UvicornLoggingLevelType,
 )
 
-_user_redirect = UserRedirect(optional=False, **_user_redirect_kwargs)
-"""Will automatically raise an exception to redirect."""
-_opt_user_redirect = UserRedirect(optional=True, **_user_redirect_kwargs)
-"""Will not raise an exception to redirect, instead, return None."""
-
-
-##### ui router #####
-
-_gui_router = GuiRouter()
-
-
-@_gui_router.page("/", dependencies=[Depends(_user_redirect)])
-def index(root_path: Annotated[str, Depends(get_root_path)]):
-    with ui.card().classes("absolute-center"):
-        ui.markdown("## Welcome to Aria2 Server")
-        ui.button("Enter AriaNg", on_click=lambda: ui.open(root_path + "/AriaNg"))
-        ui.button("Account", on_click=lambda: ui.open(root_path + "/account"))
-
-
-@_gui_router.page("/AriaNg", dependencies=[Depends(_user_redirect)])
-def aria_ng(root_path: Annotated[str, Depends(get_root_path)]):
-    # We stipulate that the `root_path` should either be empty (i.e '') or start with '/' and not end with '/'
-    # e.g. '', '/aria2-server'
-    raw_interface = "api/aria2/jsonrpc"
-
-    aria_ng_src = root_path + "/static/AriaNg"
-    interface = (
-        raw_interface
-        if root_path == ""
-        else root_path[1:]  # remove the leading '/'
-        + "/"  # add the trailing '/'
-        + raw_interface
-    )
-
-    # TODO: add quasar drawer
-    # see https://nicegui.io/documentation/section_pages_routing#page_layout
-
-    # By default, NiceGUI provides a built-in padding around the content of the page,
-    # We can remove it by adding the "p-0" class to the content element
-    ui.query(".nicegui-content").classes("p-0")
-    with ui.card().tight().classes("w-screen h-screen"):
-        AriaNgIframe(
-            aria_ng_src=aria_ng_src,
-            interface=interface,
-            secret=GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value(),
-        ).props("height=100%").props("width=100%").style("border: none;")
-
-
-@_gui_router.page("/account")
-def account(
-    user: Annotated[Optional[User], Depends(_opt_user_redirect)],
-    root_path: Annotated[str, Depends(get_root_path)],
-):
-    # before login
-    if user is None:
-        # login form
-        with ui.card().classes("absolute-center"):
-            StyledLabel("Login your account to continue")
-            with _SecureStyledForm() as login_form:
-                # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-login
-                EmailInput(name="username")
-                PasswordInput(name="password", pwd_autocomplete="current-password")
-                SubmitButton("Login")
-                login_form.method("POST").enctype(
-                    "application/x-www-form-urlencoded"
-                ).action(root_path + "/api/auth/login").redirect_url(root_path + "/")
-    # after login
-    else:
-        with ui.card().classes("absolute-center"):
-            # check whether user is valid
-            if _opt_user_redirect.check_user(user) is None:
-                _msg = dedent(
-                    """\
-                    Warning! This is a ivnalid account.
-                    Please logout and login again."""
-                )
-                _color = "red-600"
-                StyledLabel(_msg).tailwind.text_decoration_color(
-                    _color
-                ).text_decoration("underline").text_color(_color)
-
-            # edit form
-            with ui.card():
-                StyledLabel("Edit your account")
-                with _SecureStyledForm() as patch_form:
-                    # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#patch-me
-                    EmailInput(name="email")
-                    PasswordInput(name="password", pwd_autocomplete="new-password")
-                    SubmitButton("Patch")
-                    patch_form.method("PATCH").enctype("application/json").action(
-                        root_path + "/api/users/me"
-                    )
-            # logout form
-            with ui.card():
-                StyledLabel("Logou your account")
-                with _SecureStyledForm() as logout_form:
-                    # https://fastapi-users.github.io/fastapi-users/12.1/usage/routes/#post-logout
-                    SubmitButton("Logout")
-                    logout_form.method("POST").enctype(
-                        "application/x-www-form-urlencoded"
-                    ).action(root_path + "/api/auth/logout")
-
-
-##### api router #####
-
-_api_router = APIRouter(prefix="/api", tags=["api"])
-
-
-# NOTE: aria2 proxy router must be protected by user auth,
-# because `AriaNgIframe` expose aria2c rpc-secret in `src` of <iframe>,
-# e.g <iframe src="...secret=...">
-_aria2_proxy_assembly = _api.aria2.build_aria2_proxy_on(
-    APIRouter(dependencies=[Depends(_user_redirect)])
-)
-_app.on_shutdown(_aria2_proxy_assembly.on_shutdown)
-_api_router.include_router(
-    _aria2_proxy_assembly.router, prefix="/aria2", tags=["aria2"]
+__all__ = (
+    "RunKwargs",
+    "RunWithKwargs",
+    "app",
+    "build_run_kwargs",
+    "build_run_with_kwargs",
+    "get_server",
+    "run",
+    "run_with",
+    "utils",
 )
 
-_api_router.include_router(_api.auth.auth_router, prefix="/auth", tags=["auth"])
-_api_router.include_router(_api.auth.users_router, prefix="/users", tags=["users"])
+
+class _BaseUiKwargs(TypedDict):
+    title: str
+    favicon: Optional[Union[str, Path]]
+    dark: Union[bool, None]
+    language: LanguageType
+    storage_secret: str
 
 
-##### assembly #####
-
-_app.mount("/static/AriaNg", aria_ng_app(FastAPI()), name="AriaNg-static")
-_app.include_router(_api_router)
-_app.include_router(_gui_router)
-
-
-##### utils #####
+class _UvicornKwargs(TypedDict):
+    ssl_keyfile: Optional[str]  # NOTE: not `Path` type, this is uvicorn typing issue
+    ssl_certfile: Optional[Path]
+    ssl_keyfile_password: Optional[str]
+    root_path: str
 
 
-class _ServerUtils(NamepaceMixin):
-    get_server_config_from_db = staticmethod(get_server_config_from_db)
-    favicon: Path = favicon
+class RunWithKwargs(_BaseUiKwargs):
+    app: FastAPI
 
 
-class Server(NamepaceMixin):
-    app: nicegui.App = _app
-    run = staticmethod(
-        make_args_required(ui.run, (("storage_secret", Parameter.KEYWORD_ONLY),))
+class RunKwargs(_UvicornKwargs, _BaseUiKwargs):
+    host: IpvAnyHostType
+    port: int
+    show: bool
+    reload: Literal[False]
+    uvicorn_logging_level: UvicornLoggingLevelType
+    endpoint_documentation: EndpointDocumentationType
+
+
+def _build_uvivorn_kwargs() -> _UvicornKwargs:
+    ########## 👇 ##########
+    # we need do some hack for perform typing check,
+    # because the typing of following arguments is `*kwargs` in `Server.run`
+
+    # HACK, FIXME: This is uvicorn typing issue
+    # We have to convert `ssl_keyfile` to `str` type to make typing happy
+    ssl_keyfile = (
+        str(GLOBAL_CONFIG.server.ssl_keyfile)
+        if GLOBAL_CONFIG.server.ssl_keyfile is not None
+        else None
     )
-    mount_to = staticmethod(
-        make_args_required(ui.run_with, (("storage_secret", Parameter.KEYWORD_ONLY),))
+    ssl_certfile = GLOBAL_CONFIG.server.ssl_certfile
+    ssl_keyfile_password = (
+        GLOBAL_CONFIG.server.ssl_keyfile_password.get_secret_value()
+        if GLOBAL_CONFIG.server.ssl_keyfile_password is not None
+        else None
+    )
+    root_path = GLOBAL_CONFIG.server.root_path
+
+    uvicorn_kwargs = _UvicornKwargs(
+        ssl_keyfile=ssl_keyfile,
+        ssl_certfile=ssl_certfile,
+        ssl_keyfile_password=ssl_keyfile_password,
+        root_path=root_path,
     )
 
-    @staticmethod
-    def get_server() -> NiceguiServer:
-        """Accessible only after startup."""
-        try:
-            return NiceguiServer.instance
-        except AttributeError:
-            raise RuntimeError("Accessible only after startup.") from None
-
-    utils = _ServerUtils
+    return uvicorn_kwargs
 
 
-if __name__ == "__main__":
-    from aria2_server.app.main import main
+def _build_base_ui_kwargs(storage_secret: str) -> _BaseUiKwargs:
+    base_ui_kwargs = _BaseUiKwargs(
+        title=GLOBAL_CONFIG.server.title,
+        favicon=GLOBAL_CONFIG.server.favicon,
+        dark=GLOBAL_CONFIG.server.dark,
+        language=GLOBAL_CONFIG.server.language,
+        storage_secret=storage_secret,
+    )
 
-    main()
+    return base_ui_kwargs
+
+
+def build_run_kwargs(storage_secret: str) -> RunKwargs:
+    reload = False
+    run_kwargs = RunKwargs(
+        host=GLOBAL_CONFIG.server.host,
+        port=GLOBAL_CONFIG.server.port,
+        uvicorn_logging_level=GLOBAL_CONFIG.server.uvicorn_logging_level,
+        reload=reload,
+        show=GLOBAL_CONFIG.server.show,
+        endpoint_documentation=GLOBAL_CONFIG.server.endpoint_documentation,
+        **_build_base_ui_kwargs(storage_secret),
+        **_build_uvivorn_kwargs(),
+    )
+
+    return run_kwargs
+
+
+def build_run_with_kwargs(app: FastAPI, storage_secret: str) -> RunWithKwargs:
+    run_with_kwargs = RunWithKwargs(app=app, **_build_base_ui_kwargs(storage_secret))
+
+    return run_with_kwargs
+
+
+if TYPE_CHECKING:
+    import uvicorn
+
+    _fake_app = nicegui.app
+    _fake_secret = "secret"
+
+    # just for type checking
+    uvicorn.Config(app=_fake_app, **_build_uvivorn_kwargs())
+    ui.run(**build_run_kwargs(_fake_secret))
+    ui.run_with(**build_run_with_kwargs(_fake_app, _fake_secret))
+
+
+# To performance reasons, we use `ContextDecorator` instead of `asynccontextmanager`,
+# because `asynccontextmanager` will create a new generator instance every time it is called.
+# see: https://docs.python.org/zh-cn/3/library/contextlib.html#contextlib.asynccontextmanager
+class _LogSSLError(ContextDecorator):
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Type[BaseException],
+        exc_value: BaseException,
+        traceback: TracebackType,
+    ):
+        # error from uvicorn, usually, it's a error because of wrong password of the private key file
+        # see: https://github.com/encode/uvicorn/blob/4f74ed144768d53fe6a959683c8e2a9bc51cc00a/uvicorn/config.py#L101-L118
+        if exc_type is ssl.SSLError:
+            logger.critical(
+                f"SSL Error occurred, may be the password of the private key file is wrong.\n{exc_value}"
+            )
+
+
+run = _LogSSLError()(ui.run)
+run_with = ui.run_with
+app = nicegui.app
+
+
+def get_server() -> nicegui.server.Server:
+    """Accessible only after startup."""
+    try:
+        return nicegui.server.Server.instance
+    except AttributeError:
+        raise RuntimeError("Accessible only after startup.") from None

@@ -4,10 +4,10 @@ from aria2_server.db import get_async_session
 from aria2_server.db.server_config import get_server_config_db
 from aria2_server.db.server_config.models import ServerConfig
 
-__all__ = ("ServerConfig", "get_server_config_from_db")
+__all__ = ("ServerConfig", "get_server_config_in_db")
 
 
-async def get_server_config_from_db() -> ServerConfig:
+async def get_server_config_in_db() -> ServerConfig:
     get_async_session_context = asynccontextmanager(get_async_session)
     get_server_config_db_context = asynccontextmanager(get_server_config_db)
 
