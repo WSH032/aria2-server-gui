@@ -56,7 +56,7 @@ dev_docs = [
     "mkdocs-literate-nav == 0.6.1",
     "mkdocs-section-index == 0.3.8",
     "mkdocs-git-revision-date-localized-plugin == 1.2.2",
-    "mkdocs-git-committers-plugin-2 == 2.2.2",
+    "mkdocs-git-committers-plugin-2 == 2.3.0",
 ]
 
 
