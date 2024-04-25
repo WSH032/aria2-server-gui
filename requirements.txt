@@ -1,4 +1,4 @@
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 
-hatch == 1.9.1
+hatch == 1.9.7
 pre-commit == 3.5.0  # `3.6.0` only supports python 3.9+
