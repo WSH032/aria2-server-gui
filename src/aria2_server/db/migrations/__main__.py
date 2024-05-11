@@ -1,8 +1,10 @@
 import argparse
 from typing import Optional, Sequence
 
+from alembic import command
+
 from aria2_server import logger
-from aria2_server.db.migrations import revision, upgrade
+from aria2_server.db.migrations import get_current_cfg
 
 __all__ = ("argparser", "main")
 
@@ -21,11 +23,12 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     args = argparser.parse_args(argv)
 
     logger.debug(f"args: {args}")
+    current_cfg = get_current_cfg()
 
     if args.command == "upgrade":
-        upgrade(revision=args.revision)
+        command.upgrade(current_cfg, revision=args.revision)
     elif args.command == "revision":
-        revision(message=args.message)
+        command.revision(current_cfg, message=args.message, autogenerate=True)
 
 
 if __name__ == "__main__":

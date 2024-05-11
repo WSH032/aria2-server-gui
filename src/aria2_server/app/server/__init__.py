@@ -21,7 +21,7 @@ from aria2_server._types import (
     UvicornLoggingLevelType,
 )
 from aria2_server.app.server import utils
-from aria2_server.config import GLOBAL_CONFIG
+from aria2_server.config import get_current_config
 
 __all__ = (
     "RunKwargs",
@@ -65,6 +65,8 @@ class RunKwargs(_UvicornKwargs, _BaseUiKwargs):
 
 
 def _build_uvivorn_kwargs() -> _UvicornKwargs:
+    global_config = get_current_config()
+
     ########## 👇 ##########
     # we need do some hack for perform typing check,
     # because the typing of following arguments is `*kwargs` in `Server.run`
@@ -72,17 +74,17 @@ def _build_uvivorn_kwargs() -> _UvicornKwargs:
     # HACK, FIXME: This is uvicorn typing issue
     # We have to convert `ssl_keyfile` to `str` type to make typing happy
     ssl_keyfile = (
-        str(GLOBAL_CONFIG.server.ssl_keyfile)
-        if GLOBAL_CONFIG.server.ssl_keyfile is not None
+        str(global_config.server.ssl_keyfile)
+        if global_config.server.ssl_keyfile is not None
         else None
     )
-    ssl_certfile = GLOBAL_CONFIG.server.ssl_certfile
+    ssl_certfile = global_config.server.ssl_certfile
     ssl_keyfile_password = (
-        GLOBAL_CONFIG.server.ssl_keyfile_password.get_secret_value()
-        if GLOBAL_CONFIG.server.ssl_keyfile_password is not None
+        global_config.server.ssl_keyfile_password.get_secret_value()
+        if global_config.server.ssl_keyfile_password is not None
         else None
     )
-    root_path = GLOBAL_CONFIG.server.root_path
+    root_path = global_config.server.root_path
 
     uvicorn_kwargs = _UvicornKwargs(
         ssl_keyfile=ssl_keyfile,
@@ -95,11 +97,13 @@ def _build_uvivorn_kwargs() -> _UvicornKwargs:
 
 
 def _build_base_ui_kwargs(storage_secret: str) -> _BaseUiKwargs:
+    global_config = get_current_config()
+
     base_ui_kwargs = _BaseUiKwargs(
-        title=GLOBAL_CONFIG.server.title,
-        favicon=GLOBAL_CONFIG.server.favicon,
-        dark=GLOBAL_CONFIG.server.dark,
-        language=GLOBAL_CONFIG.server.language,
+        title=global_config.server.title,
+        favicon=global_config.server.favicon,
+        dark=global_config.server.dark,
+        language=global_config.server.language,
         storage_secret=storage_secret,
     )
 
@@ -107,14 +111,16 @@ def _build_base_ui_kwargs(storage_secret: str) -> _BaseUiKwargs:
 
 
 def build_run_kwargs(storage_secret: str) -> RunKwargs:
+    global_config = get_current_config()
     reload = False
+
     run_kwargs = RunKwargs(
-        host=GLOBAL_CONFIG.server.host,
-        port=GLOBAL_CONFIG.server.port,
-        uvicorn_logging_level=GLOBAL_CONFIG.server.uvicorn_logging_level,
+        host=global_config.server.host,
+        port=global_config.server.port,
+        uvicorn_logging_level=global_config.server.uvicorn_logging_level,
         reload=reload,
-        show=GLOBAL_CONFIG.server.show,
-        endpoint_documentation=GLOBAL_CONFIG.server.endpoint_documentation,
+        show=global_config.server.show,
+        endpoint_documentation=global_config.server.endpoint_documentation,
         **_build_base_ui_kwargs(storage_secret),
         **_build_uvivorn_kwargs(),
     )

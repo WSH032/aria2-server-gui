@@ -12,7 +12,7 @@ from typing import List
 from typing_extensions import Self
 
 from aria2_server import logger
-from aria2_server.config import GLOBAL_CONFIG
+from aria2_server.config import get_current_config
 
 __all__ = ("Aria2Popen", "Aria2WatchdogLifespan", "Aria2WatchdogThread")
 
@@ -27,20 +27,21 @@ def _get_cmd_args() -> List[str]:
 
     # https://aria2.github.io/manual/en/html/aria2c.html
     logger.info(f"aria2c executable: {aria2c_exec}")
+    global_config = get_current_config()
     assert (
-        GLOBAL_CONFIG.aria2.enable_rpc == "true"
+        global_config.aria2.enable_rpc == "true"
     ), "aria2.enable_rpc can only be set to 'ture'"
     cmd_args = [
         aria2c_exec,
-        f"--rpc-listen-port={GLOBAL_CONFIG.aria2.rpc_listen_port}",
-        f"--rpc-secret={GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value()}",
-        f"--enable-rpc={GLOBAL_CONFIG.aria2.enable_rpc}",
-        f"--rpc-listen-all={GLOBAL_CONFIG.aria2.rpc_listen_all}",
-        f"--rpc-secure={GLOBAL_CONFIG.aria2.rpc_secure}",
+        f"--rpc-listen-port={global_config.aria2.rpc_listen_port}",
+        f"--rpc-secret={global_config.aria2.rpc_secret.get_secret_value()}",
+        f"--enable-rpc={global_config.aria2.enable_rpc}",
+        f"--rpc-listen-all={global_config.aria2.rpc_listen_all}",
+        f"--rpc-secure={global_config.aria2.rpc_secure}",
     ]
 
-    if GLOBAL_CONFIG.aria2.conf_path is not None:
-        cmd_args.append(f"--conf-path={GLOBAL_CONFIG.aria2.conf_path}")
+    if global_config.aria2.conf_path is not None:
+        cmd_args.append(f"--conf-path={global_config.aria2.conf_path}")
 
     return cmd_args
 

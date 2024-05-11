@@ -3,48 +3,67 @@ import sys
 from typing import Optional
 
 from aria2_server.config import schemas
-from aria2_server.config.schemas import Config
 
-__all__ = ("GLOBAL_CONFIG", "reload", "schemas")
+__all__ = ("get_current_config", "reload", "schemas")
 
 
-_is_loaded = False
+_global_config: schemas.Config
+
+
+def get_current_config() -> schemas.Config:
+    """This function always returns the newest global config.
+
+    Warning:
+        You should never change the returned global config,
+        instead, you should call `reload()` to change the global config.
+    """
+    try:
+        # XXX: maybe we should return `.copy()`,
+        # but maybe it will cause performance issue?
+        return _global_config
+    except NameError:
+        raise RuntimeError(
+            "The global config has not been initialized yet. "
+            f"You should call `{__name__}.{reload.__name__}` first."
+        ) from None
 
 
 def reload(
-    config: Optional[schemas.Config] = None, _reload_nicegui: bool = True
-) -> Config:
-    """This unstable api that only be used internally.
+    config: Optional[schemas.Config] = None,
+    _reload_nicegui: bool = True,
+) -> None:
+    """Initialize or reload the global config.
 
-    This function should be called at the very beginning of the program lifecycle,
-    **before importing other `aria2_server` modules**,
-    and preferably only called once throughout.
-    Otherwise, it might fail to fully reload the new config.
+    This function should be called once before importing other `aria2_server` modules,
 
     If you want to launch the app again, you should call this function.
 
     Args:
-        config: The new config to be reloaded. If `None`, will reload the default config.
-            If you just want to reload for launch the app again, you should pass the previous config.
-            e.g. `reload(config.GLOBAL_CONFIG)`
-        _reload_nicegui: Whether to reload `nicegui` module.
+        config: The config to be loaded.
+            If `None`:
+                The first time to call `reload()`, it will initialize the global config.
+                The second time or later to call `reload()`, it just refresh all the modules,
+                so that you can launch the whole app again.
+            If not `None`:
+                It will change the global config to the new one.
+        _reload_nicegui: Whether to reload `nicegui` module when refreshing.
             Usually, you should set it to `True`, so that you can launch the whole app again.
             The argument is private, we keep it here just for debugging purpose.
     """
 
-    global _is_loaded, GLOBAL_CONFIG
+    global _global_config
 
-    # When the module is imported for the first time,
-    # `_is_loaded` is `False`, so we just return the config to `GLOBAL_CONFIG`.
-    # After loaded, `_is_loaded` will be set to `True`,
-    # so the next time we call `reload()`, we can execute the following code.
-    if not _is_loaded:
-        _is_loaded = True
-        return Config()
-
-    # NOTE: assign before reloading modules,
-    # so that we can reflect the changes to all modules.
-    GLOBAL_CONFIG = config if config is not None else Config()  # pyright: ignore[reportConstantRedefinition]
+    try:
+        # just to check whether `_global_config` is defined
+        _global_config  # noqa: B018 # pyright: ignore[reportUnusedExpression]
+    except NameError:
+        # The first time to call `reload()`
+        # i.e. `_global_config` is not defined
+        _global_config = config if config is not None else schemas.Config()
+    else:
+        # The second time or later to call `reload()`
+        if config is not None:
+            _global_config = config
 
     modules_name_need_reload = ["aria2_server"]
     if _reload_nicegui:
@@ -61,19 +80,3 @@ def reload(
     ]
     for module in modules_need_reload:
         importlib.reload(module)
-
-    # NOTE: when reloading, the `_is_loaded` will be reset to `False`,
-    # so remember to set it to `True` again.
-    _is_loaded = True
-    return GLOBAL_CONFIG
-
-
-# https://docs.python.org/3/library/importlib.html#importlib.reload
-# Do some magic to skip `GLOBAL_CONFIG = reload()` when reloading this module,
-# so that we can re-set `GLOBAL_CONFIG` by `Global GLOBAL_CONFIG = ...` in `reload()`,
-try:
-    GLOBAL_CONFIG  # noqa: B018  # pyright: ignore[reportUnusedExpression, reportUnboundVariable]
-except NameError:
-    # following code will be executed when this module is imported for the first time,
-    # and will not be executed when this module is reloaded
-    GLOBAL_CONFIG = reload()

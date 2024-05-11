@@ -24,7 +24,7 @@ from aria2_server.app._core.auth import (
 )
 from aria2_server.app._core.utils.dependencies import get_root_path
 from aria2_server.app.server._core import _api, _subapp
-from aria2_server.config import GLOBAL_CONFIG
+from aria2_server.config import get_current_config
 
 
 class _SecureStyledForm(StyledForm):
@@ -98,6 +98,8 @@ def aria_ng(root_path: Annotated[str, Depends(get_root_path)]):
     # TODO: add quasar drawer
     # see https://nicegui.io/documentation/section_pages_routing#page_layout
 
+    global_config = get_current_config()
+
     # By default, NiceGUI provides a built-in padding around the content of the page,
     # We can remove it by adding the "p-0" class to the content element
     ui.query(".nicegui-content").classes("p-0")
@@ -105,7 +107,7 @@ def aria_ng(root_path: Annotated[str, Depends(get_root_path)]):
         AriaNgIframe(
             aria_ng_src=aria_ng_src,
             interface=interface,
-            secret=GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value(),
+            secret=global_config.aria2.rpc_secret.get_secret_value(),
         ).props("height=100%").props("width=100%").style("border: none;")
 
 

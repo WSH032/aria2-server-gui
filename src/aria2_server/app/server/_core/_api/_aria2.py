@@ -13,7 +13,7 @@ from fastapi import APIRouter, Request, WebSocket
 from fastapi_proxy_lib.core.http import ReverseHttpProxy
 from fastapi_proxy_lib.core.websocket import ReverseWebSocketProxy
 
-from aria2_server.config import GLOBAL_CONFIG
+from aria2_server.config import get_current_config
 
 __all__ = ("build_aria2_proxy_on",)
 
@@ -52,8 +52,10 @@ def build_aria2_proxy_on(
     """
 
     # e.g. localhost:6800
-    aria2_netloc = f"localhost:{GLOBAL_CONFIG.aria2.rpc_listen_port}"
-    is_secure_rpc = GLOBAL_CONFIG.aria2.rpc_secure == "true"
+    global_config = get_current_config()
+
+    aria2_netloc = f"localhost:{global_config.aria2.rpc_listen_port}"
+    is_secure_rpc = global_config.aria2.rpc_secure == "true"
 
     # NOTE: DO NOT set `base_url` to `.../jsonrpc/`,
     # because aria2c allow GET method,
@@ -81,7 +83,7 @@ def build_aria2_proxy_on(
     @router.post("/rpc-secret")
     def post_rpc_secret() -> str:  # pyright: ignore[reportUnusedFunction]
         """Return rpc-secret for aria2c."""
-        return GLOBAL_CONFIG.aria2.rpc_secret.get_secret_value()
+        return global_config.aria2.rpc_secret.get_secret_value()
 
     @router.post("/{path:path}")
     @functools.wraps(aria2_http_proxy.proxy)

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import tomli
 import typer
@@ -8,12 +8,10 @@ from pydantic import ValidationError
 from typing_extensions import Annotated
 
 from aria2_server import logger
-
-# NOTE: had better NOT to import any `aria2_server` modules before calling `reload()` in `main()`
-
-if TYPE_CHECKING:
-    from aria2_server.config.schemas import Config
-
+from aria2_server.app import main as app_main
+from aria2_server.config import get_current_config, reload
+from aria2_server.config.schemas import Config
+from aria2_server.logger import configure_default_logging
 
 __all__ = ("launch_cli",)
 
@@ -22,8 +20,6 @@ launch_cli = typer.Typer(invoke_without_command=True)
 
 
 def _load_config_from_file(file: str) -> "Config":
-    from aria2_server.config.schemas import Config
-
     try:
         with typer.open_file(file, mode="rb") as f:
             # HACK, FIXME: This is type hint issue,
@@ -57,15 +53,13 @@ def launch(
         logger.info(f"Loading config from: {config}")
         config_model = _load_config_from_file(str(config))
         logger.info(f"Loaded config:\n{config_model.model_dump_json(indent=4)}")
-        from aria2_server.config import reload
+    else:
+        config_model = None
+    reload(config_model)
 
-        reload(config_model)
+    global_config = get_current_config()
 
-    from aria2_server.app import main as app_main
-    from aria2_server.config import GLOBAL_CONFIG
-    from aria2_server.logger import configure_default_logging
-
-    uvicorn_logging_level = GLOBAL_CONFIG.server.uvicorn_logging_level
+    uvicorn_logging_level = global_config.server.uvicorn_logging_level
     if uvicorn_logging_level == "trace":
         uvicorn_logging_level = "debug"
 
