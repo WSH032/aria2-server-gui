@@ -7,7 +7,7 @@ import threading
 from collections import deque
 from contextlib import AbstractContextManager
 from subprocess import Popen
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from typing_extensions import Self
 
@@ -45,7 +45,14 @@ def _get_cmd_args() -> List[str]:
     return cmd_args
 
 
-class Aria2Popen(Popen[bytes]):
+# `Popen` is not a generic class before `Python 3.9`
+if TYPE_CHECKING:
+    _PopenClass = Popen[bytes]
+else:
+    _PopenClass = Popen
+
+
+class Aria2Popen(_PopenClass):
     """You don't need to instantiate this class directly, we expose this class for type hint."""
 
     # modified from: https://github.com/WSH032/aria2-wheel/blob/f11f10a4fc7c315a7432e26a3f17041945a8123e/README.md?plain=1#L92-L138
@@ -161,7 +168,9 @@ class Aria2WatchdogThread(threading.Thread):
         return self.shutdown_current_subprocess()
 
 
-class Aria2WatchdogLifespan(AbstractContextManager["Aria2WatchdogLifespan"]):
+# HACK: `AbstractContextManager` is not a generic class before `Python 3.9`
+# see: https://github.com/microsoft/pyright/issues/7893
+class Aria2WatchdogLifespan(AbstractContextManager):  # pyright: ignore[reportMissingTypeArgument]
     def __init__(self) -> None:
         # It is best not to set deque maxlen greater than 2 to avoid unexpected memory leaks
         self.aria2_watchdog_thread = Aria2WatchdogThread(2)
