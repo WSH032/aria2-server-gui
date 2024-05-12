@@ -10,18 +10,42 @@
     <em>带有GUI的aria2服务器，可作为 python/桌面/远程 下载器</em>
 </p>
 
-## 用法
 
 !!! warning
 
-    This repo is a work in progress.
+    This repo is a work in progress...
 
-1. 修改所有带有 `EDIT` 注释的地方
-2. 按照[pypa](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)的指南去 `pypi` 申请 `Trusted Publisher`
-3. 删掉本用法部分
+> [!WARNING]
+>
+> Due to time constraints, I have decided to halt the development of this project. Originally, I intended to create a remote Python downloader, but it turns out that using Python for GUI development is not a good approach.
+>
+> The project currently has a demo version available for use. Please refer to the following instructions to use it.
+>
+> If needed, feel free to fork this project.
+>
+> Alternative projects that can be used instead: [aria2p](https://github.com/pawamoy/aria2p), [persepolis](https://github.com/persepolisdm/persepolis).
 
-纯python打包参考 <https://github.com/WSH032/fastapi-proxy-lib>
-带有不同平台的二进制依赖打包参考 <https://github.com/WSH032/aria2-wheel>
+## Features
+
+A remote downloader with account management and login system.
+
+- Frontend: `nicegui` and `AriaNg`.
+- Backend: `aria2`, `FastAPI`, and `uvicorn`.
+- Database management: `alembic` and `sqlalchemy`.
+- Login system management: `fastapi-user`.
+- CLI program: `typer`.
+
+Additionally, it includes an SSL self-signed certificate generator `src/aria2_server/cli/utils/mkcert.py`
+
+## Usage
+
+```bash
+git clone https://github.com/WSH032/aria2-server-gui.git
+cd aria2-server-gui
+python -m pip install -e .
+
+aria2-server --help
+```
 
 ---
 
@@ -50,6 +74,21 @@ Source Code: <https://github.com/WSH032/aria2-server-gui/>
 English is not the native language of the author (me), so if you find any areas for improvement in the documentation, your feedback is welcome.
 
 If you think this project helpful, consider giving it a star ![GitHub Repo stars](https://img.shields.io/github/stars/wsh032/aria2-server-gui?style=social), which makes me happy. :smile:
+
+---
+
+<details>
+
+<summary>for develeoper</summary>
+
+1. 修改所有带有 `EDIT` 注释的地方
+2. 按照[pypa](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)的指南去 `pypi` 申请 `Trusted Publisher`
+3. 删掉本用法部分
+
+纯python打包参考 <https://github.com/WSH032/fastapi-proxy-lib>
+带有不同平台的二进制依赖打包参考 <https://github.com/WSH032/aria2-wheel>
+
+</details>
 
 <!-- link -->
 
