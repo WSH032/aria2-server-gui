@@ -73,7 +73,7 @@ dev_test = [
 ]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_docs = [
-    "mkdocs-material == 9.5.3",
+    "mkdocs-material == 9.5.21",
     "mkdocstrings[python] == 0.24.0",
     # We need black to format code in mkdocstrings,
     # see https://mkdocstrings.github.io/python/usage/configuration/signatures/#line_length
