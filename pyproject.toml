@@ -66,7 +66,7 @@ dev_fmt = [
 ]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_test = [
-    "pyright == 1.1.349",
+    "pyright == 1.1.364",
     "pytest==7.4.4",
     "pytest-cov== 4.1.0",
     "pytest-timeout==2.2.0",
