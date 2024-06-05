@@ -60,7 +60,7 @@ dependencies = [
 dev = ["Babel==2.14.0"]
 # NOTE: Must use `==` to constrain version for github actions cache working properly
 dev_fmt = [
-    "ruff==0.2.0",
+    "ruff==0.4.8",
     "codespell==2.2.6",
     "tomli",            # tomli needed for `codespell`
 ]
